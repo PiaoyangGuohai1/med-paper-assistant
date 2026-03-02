@@ -63,7 +63,7 @@ class ExportPipeline:
         self._ref_manager = ref_manager
         self._pandoc = pandoc_exporter or PandocExporter()
 
-    def prepare_for_pandoc(self, content: str) -> dict[str, Any]:
+    def prepare_for_pandoc(self, content: str, *, strict: bool = False) -> dict[str, Any]:
         """
         Convert draft content to Pandoc-ready format.
 
@@ -74,6 +74,8 @@ class ExportPipeline:
 
         Args:
             content: Markdown with wikilink citations.
+            strict: If True, raise ValueError when any citation key cannot be
+                    resolved to a local reference (production export gate).
 
         Returns:
             {
@@ -82,7 +84,11 @@ class ExportPipeline:
                 "citation_keys": list,   # All citation keys found
                 "conversion": ConversionResult,
                 "warnings": list[str],
+                "missing_keys": list[str],
             }
+
+        Raises:
+            ValueError: When strict=True and unresolved citation keys exist.
         """
         # Step 1: Convert wikilinks → [@key]
         conversion = wikilinks_to_pandoc(content)
@@ -90,13 +96,23 @@ class ExportPipeline:
         # Step 2: Build bibliography from citation keys
         bibliography = []
         warnings = list(conversion.warnings)
+        missing_keys: list[str] = []
 
         for key in conversion.citation_keys:
             csl_entry = self._resolve_citation_key(key)
             if csl_entry:
                 bibliography.append(csl_entry)
             else:
+                missing_keys.append(key)
                 warnings.append(f"Citation key '{key}' not found in local references")
+
+        # Step 3: Strict mode — refuse to export with unresolved citations
+        if strict and missing_keys:
+            raise ValueError(
+                f"Cannot export: {len(missing_keys)} unresolved citation(s): "
+                + ", ".join(missing_keys)
+                + ". Save these references first with save_reference_mcp()."
+            )
 
         return {
             "content": conversion.content,
@@ -104,6 +120,7 @@ class ExportPipeline:
             "citation_keys": conversion.citation_keys,
             "conversion": conversion,
             "warnings": warnings,
+            "missing_keys": missing_keys,
         }
 
     @staticmethod
@@ -237,8 +254,8 @@ class ExportPipeline:
         # Read draft
         content = Path(draft_path).read_text(encoding="utf-8")
 
-        # Prepare for Pandoc (citation conversion)
-        prepared = self.prepare_for_pandoc(content)
+        # Prepare for Pandoc (citation conversion) — strict mode blocks on missing refs
+        prepared = self.prepare_for_pandoc(content, strict=True)
 
         if not prepared["bibliography"]:
             logger.warning("No bibliography entries found — citations won't be resolved")
@@ -324,7 +341,7 @@ class ExportPipeline:
             raise RuntimeError("Pandoc is not available. Install via pypandoc.download_pandoc()")
 
         content = Path(draft_path).read_text(encoding="utf-8")
-        prepared = self.prepare_for_pandoc(content)
+        prepared = self.prepare_for_pandoc(content, strict=True)
 
         if not prepared["bibliography"]:
             logger.warning("No bibliography entries found — citations won't be resolved")

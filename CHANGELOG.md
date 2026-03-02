@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.4] - 2026-03-02
+
+### Added
+
+- **Pre-export citation gate (C5 HARD GATE)**: `export_docx()` and `export_pdf()` now run Hook C5 (Wikilink Resolvable) as a blocking gate — export is refused if any `[[wikilink]]` citations cannot be resolved to saved references
+- **Strict mode for `prepare_for_pandoc()`**: New `strict=True` parameter raises `ValueError` on unresolved citation keys (used by `export_docx/pdf` internally as second defense layer)
+- **Word export residual wikilink warning**: `save_document()` scans the final Word document for any remaining `[[...]]` patterns and warns the user
+- 9 new tests covering all three defense layers
+
 ## [0.4.3] - 2026-03-02
 
 ### Fixed

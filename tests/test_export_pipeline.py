@@ -346,3 +346,79 @@ class TestBuildBibliographyJson:
         entries = pipeline.build_bibliography_json(content)
         assert len(entries) == 1
         assert entries[0]["id"] == "tang2023_38049909"
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# prepare_for_pandoc — strict mode (pre-export gate)
+# ──────────────────────────────────────────────────────────────────────────────
+
+
+class TestPrepareForPandocStrict:
+    """Test the strict=True gate that blocks export on unresolved citations."""
+
+    def test_strict_passes_when_all_refs_exist(self, pipeline):
+        content = "Text [[tang2023_38049909]] and [[lee2024_12345678]]."
+        result = pipeline.prepare_for_pandoc(content, strict=True)
+        assert len(result["bibliography"]) == 2
+        assert result["missing_keys"] == []
+
+    def test_strict_raises_on_missing_ref(self, pipeline):
+        content = "Text [[unknown2099_99999999]]."
+        with pytest.raises(ValueError, match="unresolved citation"):
+            pipeline.prepare_for_pandoc(content, strict=True)
+
+    def test_strict_raises_lists_all_missing_keys(self, pipeline):
+        content = "A [[fake2099_11111111]] and B [[fake2099_22222222]]."
+        with pytest.raises(ValueError, match="fake2099_11111111") as exc_info:
+            pipeline.prepare_for_pandoc(content, strict=True)
+        assert "fake2099_22222222" in str(exc_info.value)
+        assert "2 unresolved" in str(exc_info.value)
+
+    def test_non_strict_warns_but_continues(self, pipeline):
+        content = "Text [[unknown2099_99999999]]."
+        result = pipeline.prepare_for_pandoc(content, strict=False)
+        assert len(result["warnings"]) == 1
+        assert result["missing_keys"] == ["unknown2099_99999999"]
+
+    def test_strict_default_is_false(self, pipeline):
+        """Backward compatibility: default call doesn't raise."""
+        content = "Text [[unknown2099_99999999]]."
+        result = pipeline.prepare_for_pandoc(content)
+        assert len(result["warnings"]) == 1
+
+    def test_no_citations_passes_strict(self, pipeline):
+        content = "No citations here."
+        result = pipeline.prepare_for_pandoc(content, strict=True)
+        assert result["missing_keys"] == []
+
+
+class TestExportDocxStrictGate:
+    """export_docx now uses strict=True — blocks on missing refs."""
+
+    def test_export_blocks_on_missing_ref(self, pipeline, tmp_path):
+        draft = tmp_path / "bad.md"
+        draft.write_text("Text [[fake2099_99999999]].", encoding="utf-8")
+        output = tmp_path / "bad.docx"
+
+        with pytest.raises(ValueError, match="unresolved citation"):
+            pipeline.export_docx(str(draft), str(output))
+
+    def test_export_succeeds_with_valid_refs(self, pipeline, mock_pandoc, tmp_path):
+        draft = tmp_path / "good.md"
+        draft.write_text("Text [[tang2023_38049909]].", encoding="utf-8")
+        output = tmp_path / "good.docx"
+
+        result = pipeline.export_docx(str(draft), str(output))
+        assert result["success"] is True
+
+
+class TestExportPdfStrictGate:
+    """export_pdf now uses strict=True — blocks on missing refs."""
+
+    def test_export_blocks_on_missing_ref(self, pipeline, tmp_path):
+        draft = tmp_path / "bad.md"
+        draft.write_text("Text [[fake2099_99999999]].", encoding="utf-8")
+        output = tmp_path / "bad.pdf"
+
+        with pytest.raises(ValueError, match="unresolved citation"):
+            pipeline.export_pdf(str(draft), str(output))

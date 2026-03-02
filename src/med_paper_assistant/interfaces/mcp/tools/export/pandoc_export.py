@@ -6,6 +6,7 @@ Generates CSL-JSON bibliography automatically from local references.
 """
 
 import os
+from pathlib import Path
 from typing import Optional
 
 from mcp.server.fastmcp import FastMCP
@@ -34,6 +35,38 @@ def register_pandoc_export_tools(mcp: FastMCP):
         ref_manager = ReferenceManager(project_manager=pm)
         pandoc = PandocExporter()
         return ExportPipeline(ref_manager, pandoc), pm
+
+    def _run_pre_export_citation_gate(content: str, project_dir: str) -> str | None:
+        """Run C5 wikilink-resolvable hook as a HARD GATE before export.
+
+        Args:
+            content: Draft markdown content (with [[wikilink]] citations).
+            project_dir: Absolute path to the project directory.
+
+        Returns:
+            None if all citations resolve; error message string if any fail.
+        """
+        from med_paper_assistant.infrastructure.persistence.writing_hooks import (
+            WritingHooksEngine,
+        )
+
+        engine = WritingHooksEngine(project_dir=Path(project_dir))
+        c5_result = engine.check_wikilink_resolvable(content)
+
+        if c5_result.passed:
+            return None
+
+        # Build a clear error message listing every unresolved wikilink
+        unresolved = [iss.message for iss in c5_result.issues if iss.severity == "CRITICAL"]
+        detail = "\n".join(f"  - {msg}" for msg in unresolved)
+        return (
+            f"❌ **Export blocked — {c5_result.stats.get('unresolved', '?')} "
+            f"unresolved citation(s)**\n\n"
+            f"{detail}\n\n"
+            f"Fix: Save missing references with `save_reference_mcp(pmid)` "
+            f"or correct the wikilinks, then retry export.\n\n"
+            f"ℹ️ Hook C5 (Wikilink Resolvable) — pre-export HARD GATE"
+        )
 
     @mcp.tool()
     def export_docx(
@@ -89,6 +122,18 @@ def register_pandoc_export_tools(mcp: FastMCP):
 
             if not os.path.exists(draft_path):
                 return f"❌ Draft file not found: `{draft_filename}`"
+
+            # ── HARD GATE: C5 Wikilink Resolvable ──
+            with open(draft_path, "r", encoding="utf-8") as f:
+                draft_content = f.read()
+
+            project_dir = str(Path(drafts_dir).parent)
+            gate_error = _run_pre_export_citation_gate(draft_content, project_dir)
+            if gate_error:
+                log_tool_error(
+                    "export_docx", Exception("C5 gate failed"), {"draft": draft_filename}
+                )
+                return gate_error
 
             # Determine output path
             if not output_filename:
@@ -187,6 +232,16 @@ def register_pandoc_export_tools(mcp: FastMCP):
 
             if not os.path.exists(draft_path):
                 return f"❌ Draft file not found: `{draft_filename}`"
+
+            # ── HARD GATE: C5 Wikilink Resolvable ──
+            with open(draft_path, "r", encoding="utf-8") as f:
+                draft_content = f.read()
+
+            project_dir = str(Path(drafts_dir).parent)
+            gate_error = _run_pre_export_citation_gate(draft_content, project_dir)
+            if gate_error:
+                log_tool_error("export_pdf", Exception("C5 gate failed"), {"draft": draft_filename})
+                return gate_error
 
             if not output_filename:
                 base = os.path.splitext(draft_filename)[0]

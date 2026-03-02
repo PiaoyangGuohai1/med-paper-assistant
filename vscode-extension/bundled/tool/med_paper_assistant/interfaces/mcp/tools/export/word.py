@@ -6,6 +6,7 @@ Full Word export workflow with session management.
 
 import json
 import os
+import re
 from typing import Optional
 
 from mcp.server.fastmcp import FastMCP
@@ -222,6 +223,10 @@ def register_word_export_tools(
         """
         Save the document to Word file and close session.
 
+        Performs a final safety check for residual [[wikilink]] citations
+        that were never converted — these would appear as raw text in the
+        exported Word file.
+
         Args:
             session_id: Session ID from start_document_session
             output_filename: Output file path
@@ -233,10 +238,34 @@ def register_word_export_tools(
             session = _active_documents[session_id]
             doc = session["doc"]
 
+            # ── Safety check: scan for residual [[wikilink]] citations ──
+            residual_wikilinks: list[str] = []
+            for paragraph in doc.paragraphs:
+                found = re.findall(r"\[\[([^\]]+)\]\]", paragraph.text)
+                residual_wikilinks.extend(found)
+
+            warning_msg = ""
+            if residual_wikilinks:
+                unique = sorted(set(residual_wikilinks))
+                warning_msg = (
+                    f"\n\n⚠️ **Warning: {len(unique)} unresolved wikilink(s) "
+                    f"found in document**\n"
+                    f"These will appear as raw `[[...]]` text in the Word file:\n"
+                )
+                for wl in unique:
+                    warning_msg += f"  - `[[{wl}]]`\n"
+                warning_msg += (
+                    "\nConsider using `sync_references()` to convert "
+                    "wikilinks before export."
+                )
+
             path = word_writer.save_document(doc, output_filename)
 
             del _active_documents[session_id]
 
-            return f"✅ Document saved successfully to: {path}\n\nSession '{session_id}' closed."
+            return (
+                f"✅ Document saved successfully to: {path}\n\n"
+                f"Session '{session_id}' closed.{warning_msg}"
+            )
         except Exception as e:
             return f"Error saving document: {str(e)}"
