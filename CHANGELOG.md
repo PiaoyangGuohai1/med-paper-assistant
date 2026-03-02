@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-03-02
+
+### Fixed
+
+- **Dashboard ThemeProvider**: Replace `setState`-in-effect with `useSyncExternalStore` for hydration detection (ESLint `react-hooks/set-state-in-effect`)
+- **Dashboard DrawioEditor**: Fix `ExportFormats` type mismatch (`xml` → `xmlsvg`), remove unsupported `style` prop
+- **Dashboard stats/route.ts**: Next.js 16 `params` type changed to `Promise<>` with `await`
+- **sync_repo_counts.py**: Remove unused `warnings` variable (ruff F841)
+- **Bundled Python sync**: Fix rsync target to correct `bundled/tool/` path
+
 ## [0.4.0] - 2026-03-02
 
 ### Added
