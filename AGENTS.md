@@ -112,34 +112,34 @@ Copilot Hooks（寫作時即時修正，`auto-paper/SKILL.md`）↔ Pre-Commit H
 
 **Code-Enforced**（`run_writing_hooks` / `run_review_hooks` / `run_meta_learning` 有確定性程式碼邏輯）：
 
-| Hook | 引擎 | 位置 |
-| --- | --- | --- |
-| A5 語言一致性 | WritingHooksEngine.check_language_consistency | persistence/writing_hooks/_post_write.py |
-| A3b AI 結構信號 | WritingHooksEngine.check_ai_writing_signals | persistence/writing_hooks/_post_write.py |
-| A6 段落重複 | WritingHooksEngine.check_overlap | persistence/writing_hooks/_post_write.py |
-| B8 統計對齊 | WritingHooksEngine.check_data_claim_alignment | persistence/writing_hooks/_section_quality.py |
-| B9 時態一致性 | WritingHooksEngine.check_section_tense | persistence/writing_hooks/_section_quality.py |
-| B10 段落品質 | WritingHooksEngine.check_paragraph_quality | persistence/writing_hooks/_section_quality.py |
-| B11 Results 客觀性 | WritingHooksEngine.check_results_interpretation | persistence/writing_hooks/_section_quality.py |
-| B12 Introduction 結構 | WritingHooksEngine.check_intro_structure | persistence/writing_hooks/_section_quality.py |
-| B13 Discussion 結構 | WritingHooksEngine.check_discussion_structure | persistence/writing_hooks/_section_quality.py |
-| B14 倫理聲明 | WritingHooksEngine.check_ethical_statements | persistence/writing_hooks/_section_quality.py |
-| B15 Hedging 密度 | WritingHooksEngine.check_hedging_density | persistence/writing_hooks/_section_quality.py |
-| B16 效果量報告 | WritingHooksEngine.check_effect_size_reporting | persistence/writing_hooks/_section_quality.py |
-| C9 補充材料交叉引用 | WritingHooksEngine.check_supplementary_crossref | persistence/writing_hooks/_manuscript.py |
-| C10 文獻全文驗證 | WritingHooksEngine.check_reference_fulltext_status | persistence/writing_hooks/_manuscript.py |
-| C11 引用分布 | WritingHooksEngine.check_citation_distribution | persistence/writing_hooks/_manuscript.py |
-| C12 引用決策審計 | WritingHooksEngine.check_citation_relevance_audit | persistence/writing_hooks/_manuscript.py |
-| C13 圖表品質 | WritingHooksEngine.check_figure_table_quality | persistence/writing_hooks/_manuscript.py |
-| D1-D9 Meta-Learning | MetaLearningEngine.analyze() | persistence/meta_learning_engine.py |
-| F1-F4 數據產出物 | WritingHooksEngine.validate_data_artifacts | persistence/writing_hooks/_data_artifacts.py |
-| G9 Git 狀態 | WritingHooksEngine.check_git_status | persistence/writing_hooks/_git.py |
-| R1 審查報告深度 | ReviewHooksEngine.check_review_report_depth | persistence/review_hooks.py |
-| R2 作者回應完整性 | ReviewHooksEngine.check_author_response_completeness | persistence/review_hooks.py |
-| R3 EQUATOR 合規門檻 | ReviewHooksEngine.check_equator_compliance | persistence/review_hooks.py |
-| R4 審查-修正追蹤性 | ReviewHooksEngine.check_review_fix_traceability | persistence/review_hooks.py |
-| R5 審後 Anti-AI 門檻 | ReviewHooksEngine.check_post_review_anti_ai | persistence/review_hooks.py |
-| R6 引用預算門檻 | ReviewHooksEngine.check_citation_budget | persistence/review_hooks.py |
+| Hook                  | 引擎                                                 | 位置                                           |
+| --------------------- | ---------------------------------------------------- | ---------------------------------------------- |
+| A5 語言一致性         | WritingHooksEngine.check_language_consistency        | persistence/writing_hooks/\_post_write.py      |
+| A3b AI 結構信號       | WritingHooksEngine.check_ai_writing_signals          | persistence/writing_hooks/\_post_write.py      |
+| A6 段落重複           | WritingHooksEngine.check_overlap                     | persistence/writing_hooks/\_post_write.py      |
+| B8 統計對齊           | WritingHooksEngine.check_data_claim_alignment        | persistence/writing_hooks/\_section_quality.py |
+| B9 時態一致性         | WritingHooksEngine.check_section_tense               | persistence/writing_hooks/\_section_quality.py |
+| B10 段落品質          | WritingHooksEngine.check_paragraph_quality           | persistence/writing_hooks/\_section_quality.py |
+| B11 Results 客觀性    | WritingHooksEngine.check_results_interpretation      | persistence/writing_hooks/\_section_quality.py |
+| B12 Introduction 結構 | WritingHooksEngine.check_intro_structure             | persistence/writing_hooks/\_section_quality.py |
+| B13 Discussion 結構   | WritingHooksEngine.check_discussion_structure        | persistence/writing_hooks/\_section_quality.py |
+| B14 倫理聲明          | WritingHooksEngine.check_ethical_statements          | persistence/writing_hooks/\_section_quality.py |
+| B15 Hedging 密度      | WritingHooksEngine.check_hedging_density             | persistence/writing_hooks/\_section_quality.py |
+| B16 效果量報告        | WritingHooksEngine.check_effect_size_reporting       | persistence/writing_hooks/\_section_quality.py |
+| C9 補充材料交叉引用   | WritingHooksEngine.check_supplementary_crossref      | persistence/writing_hooks/\_manuscript.py      |
+| C10 文獻全文驗證      | WritingHooksEngine.check_reference_fulltext_status   | persistence/writing_hooks/\_manuscript.py      |
+| C11 引用分布          | WritingHooksEngine.check_citation_distribution       | persistence/writing_hooks/\_manuscript.py      |
+| C12 引用決策審計      | WritingHooksEngine.check_citation_relevance_audit    | persistence/writing_hooks/\_manuscript.py      |
+| C13 圖表品質          | WritingHooksEngine.check_figure_table_quality        | persistence/writing_hooks/\_manuscript.py      |
+| D1-D9 Meta-Learning   | MetaLearningEngine.analyze()                         | persistence/meta_learning_engine.py            |
+| F1-F4 數據產出物      | WritingHooksEngine.validate_data_artifacts           | persistence/writing_hooks/\_data_artifacts.py  |
+| G9 Git 狀態           | WritingHooksEngine.check_git_status                  | persistence/writing_hooks/\_git.py             |
+| R1 審查報告深度       | ReviewHooksEngine.check_review_report_depth          | persistence/review_hooks.py                    |
+| R2 作者回應完整性     | ReviewHooksEngine.check_author_response_completeness | persistence/review_hooks.py                    |
+| R3 EQUATOR 合規門檻   | ReviewHooksEngine.check_equator_compliance           | persistence/review_hooks.py                    |
+| R4 審查-修正追蹤性    | ReviewHooksEngine.check_review_fix_traceability      | persistence/review_hooks.py                    |
+| R5 審後 Anti-AI 門檻  | ReviewHooksEngine.check_post_review_anti_ai          | persistence/review_hooks.py                    |
+| R6 引用預算門檻       | ReviewHooksEngine.check_citation_budget              | persistence/review_hooks.py                    |
 
 **Agent-Driven**（僅靠 Agent 遵循 SKILL.md 指示，無 Code 強制）：
 
@@ -162,11 +162,11 @@ uv 優先。`pyproject.toml` + `uv.lock`。禁止全域安裝。詳見 `.github/
 
 狀態檔：`.mdpaper-state.json`
 
-| 時機                               | 動作                                                    |
-| ---------------------------------- | ------------------------------------------------------- |
-| 新對話 / 用戶說「繼續」            | `get_workspace_state()`                                 |
-| 開始重要任務 / 完成階段 / 對話結束 | `sync_workspace_state(doing, next_action)`              |
-| 恢復成功後                         | `clear_recovery_state()`                                |
+| 時機                               | 動作                                                     |
+| ---------------------------------- | -------------------------------------------------------- |
+| 新對話 / 用戶說「繼續」            | `get_workspace_state()`                                  |
+| 開始重要任務 / 完成階段 / 對話結束 | `sync_workspace_state(doing, next_action)`               |
+| 恢復成功後                         | `clear_recovery_state()`                                 |
 | 寫作中段落切換前                   | `checkpoint_writing_context(section, plan, notes, refs)` |
 
 > **Writing Session Auto-Checkpoint**: `write_draft()` / `patch_draft()` 成功後自動寫入 `writing_session` 至 `.mdpaper-state.json`。不需手動操作。`get_workspace_state()` 恢復時會顯示 ✍️ Writing Session banner。
@@ -261,14 +261,14 @@ uv 優先。`pyproject.toml` + `uv.lock`。禁止全域安裝。詳見 `.github/
 
 Pipeline（auto-paper SKILL.md）定義「何時」→ Skill 定義「如何」→ Hook 定義「品質」。
 
-| 外部 MCP | Phase | 觸發 |
-| --- | --- | --- |
-| pubmed-search | 2 文獻, 2.1 全文 | 永遠 |
-| asset-aware | 2.1 全文解析 | 有 PDF/OA 可取（否則記錄 metadata） |
-| zotero-keeper | 2 文獻 | 用戶有 Zotero |
-| cgu | 3 概念 / 5 Discussion | novelty < 75 / 論點弱 |
-| drawio | 5 Methods | 需 flow diagram |
-| data tools | 5 Results | 需表格/圖 |
+| 外部 MCP      | Phase                 | 觸發                                |
+| ------------- | --------------------- | ----------------------------------- |
+| pubmed-search | 2 文獻, 2.1 全文      | 永遠                                |
+| asset-aware   | 2.1 全文解析          | 有 PDF/OA 可取（否則記錄 metadata） |
+| zotero-keeper | 2 文獻                | 用戶有 Zotero                       |
+| cgu           | 3 概念 / 5 Discussion | novelty < 75 / 論點弱               |
+| drawio        | 5 Methods             | 需 flow diagram                     |
+| data tools    | 5 Results             | 需表格/圖                           |
 
 詳見 `.claude/skills/auto-paper/SKILL.md`「Cross-Tool Orchestration Map」。
 

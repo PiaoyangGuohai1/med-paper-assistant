@@ -19,15 +19,15 @@ user-invocable: false
 
 ## 審查範圍
 
-| 面向 | 檢查內容 |
-|------|----------|
-| 研究設計 | 設計類型是否適當、因果推論是否合理 |
-| 選擇偏差 | inclusion/exclusion、sampling strategy |
-| 測量偏差 | 結局測量是否有效、盲法是否充分 |
-| 混淆控制 | 已知混淆因子是否被處理 |
-| 樣本量 | power analysis、效果量假設是否合理 |
-| 統計方法 | 是否適合資料類型、多重比較校正 |
-| 報告完整性 | EQUATOR 報告指引合規性 |
+| 面向       | 檢查內容                               |
+| ---------- | -------------------------------------- |
+| 研究設計   | 設計類型是否適當、因果推論是否合理     |
+| 選擇偏差   | inclusion/exclusion、sampling strategy |
+| 測量偏差   | 結局測量是否有效、盲法是否充分         |
+| 混淆控制   | 已知混淆因子是否被處理                 |
+| 樣本量     | power analysis、效果量假設是否合理     |
+| 統計方法   | 是否適合資料類型、多重比較校正         |
+| 報告完整性 | EQUATOR 報告指引合規性                 |
 
 ## 限制
 
@@ -48,12 +48,15 @@ read_draft(section="results") → 讀取 Results
 ### Step 2: 逐項審查
 
 #### 2a. 研究設計評估
+
 - 設計類型是否與研究問題匹配？
 - 是否有 protocol registration（如 ClinicalTrials.gov）？
 - 倫理審查是否完備？
 
 #### 2b. 偏差風險評估
+
 依 Cochrane Risk of Bias 框架：
+
 1. 隨機序列產生（selection bias）
 2. 分配隱蔽（selection bias）
 3. 盲法（performance/detection bias）
@@ -62,6 +65,7 @@ read_draft(section="results") → 讀取 Results
 6. 其他來源
 
 #### 2c. 統計方法審查
+
 - 描述性統計選擇是否恰當（mean±SD vs median(IQR)）
 - 推論統計方法是否適合（parametric vs non-parametric）
 - 多重比較是否校正（Bonferroni / Holm / FDR）
@@ -69,7 +73,9 @@ read_draft(section="results") → 讀取 Results
 - 缺失值處理策略
 
 #### 2d. EQUATOR 合規
+
 根據研究類型自動偵測適用指引：
+
 - RCT → CONSORT
 - 觀察性 → STROBE
 - 系統性回顧 → PRISMA

@@ -16,15 +16,15 @@ user-invocable: false
 
 ## 審查範圍
 
-| 面向 | 檢查內容 |
-|------|----------|
-| 資料結構 | 資料類型、分布假設、缺失值處理 |
-| 統計檢定 | 檢定選擇是否適合資料類型與研究設計 |
-| 多重比較 | Bonferroni / FDR / Holm 校正 |
-| 效果量 | Cohen's d / OR / HR / 信賴區間 |
-| 樣本量 | Power analysis、效果量假設合理性 |
+| 面向       | 檢查內容                                     |
+| ---------- | -------------------------------------------- |
+| 資料結構   | 資料類型、分布假設、缺失值處理               |
+| 統計檢定   | 檢定選擇是否適合資料類型與研究設計           |
+| 多重比較   | Bonferroni / FDR / Holm 校正                 |
+| 效果量     | Cohen's d / OR / HR / 信賴區間               |
+| 樣本量     | Power analysis、效果量假設合理性             |
 | 敏感度分析 | Subgroup / per-protocol / intention-to-treat |
-| 圖表統計 | 圖表中的統計標註是否正確 |
+| 圖表統計   | 圖表中的統計標註是否正確                     |
 
 ## 限制
 
@@ -61,7 +61,6 @@ reviewer: statistics
 model: GPT-5.3-Codex
 sections_reviewed: [methods, results]
 ---
-
 issues:
   - severity: MAJOR
     section: results

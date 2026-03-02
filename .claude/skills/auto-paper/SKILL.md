@@ -253,28 +253,28 @@ pipeline:
 2. 對每篇文獻：
    a. 查詢 PDF 來源：`get_fulltext(pmcid)` （pubmed-search MCP）或 `analyze_fulltext_access(pmids)` 確認 Open Access 狀態
    b. IF 全文可取得：
-      - 取得全文：pubmed-search `get_fulltext(pmcid, sections="all")` 或下載 PDF
-      - 解析全文：asset-aware `ingest_documents(file_paths=[pdf_path], use_marker=true)`
-      - 等候處理：`get_job_status(job_id)` 直到完成
-      - 建立索引：`inspect_document_manifest(doc_id)` 取得完整資產清單
-      - 提取關鍵段落：`get_section_content(doc_id, section_path)` → Methods, Results, Discussion
-      - 更新 metadata.json：加入 `fulltext_ingested: true`, `asset_aware_doc_id`, `fulltext_sections`
-   c. IF 全文不可取得：
-      - 記錄原因：metadata.json 加入 `fulltext_ingested: false`, `fulltext_unavailable_reason: "..."`
-      - ⚠️ 此文獻在寫作時僅能引用其 abstract 中的結論性資訊，不可引用具體方法或數據
+   - 取得全文：pubmed-search `get_fulltext(pmcid, sections="all")` 或下載 PDF
+   - 解析全文：asset-aware `ingest_documents(file_paths=[pdf_path], use_marker=true)`
+   - 等候處理：`get_job_status(job_id)` 直到完成
+   - 建立索引：`inspect_document_manifest(doc_id)` 取得完整資產清單
+   - 提取關鍵段落：`get_section_content(doc_id, section_path)` → Methods, Results, Discussion
+   - 更新 metadata.json：加入 `fulltext_ingested: true`, `asset_aware_doc_id`, `fulltext_sections`
+     c. IF 全文不可取得：
+   - 記錄原因：metadata.json 加入 `fulltext_ingested: false`, `fulltext_unavailable_reason: "..."`
+   - ⚠️ 此文獻在寫作時僅能引用其 abstract 中的結論性資訊，不可引用具體方法或數據
 3. **Subagent 閱讀分析（CRITICAL — 每篇一個 subagent）**：
    a. 主 Agent 呼叫 `get_reference_for_analysis(pmid)` → 取得結構化全文包（≤30K 字元）
    b. 用 `runSubagent` 啟動獨立 subagent，prompt 包含：
-      - 全文內容（步驟 a 的結果）
-      - 分析指令：摘要、方法學評估、關鍵發現、限制、可用於文章哪些章節
-      - 要求 subagent 呼叫 `save_reference_analysis(pmid, summary, methodology, key_findings, limitations, usage_sections, relevance_score)`
-   c. Subagent 完成後，`analysis.json` 已寫入 reference 目錄，`metadata.json` 標記 `analysis_completed: true`
-   d. 主 Agent 後續寫作時只使用 `analysis_summary`，不再重讀全文 → **零 context 汙染**
+   - 全文內容（步驟 a 的結果）
+   - 分析指令：摘要、方法學評估、關鍵發現、限制、可用於文章哪些章節
+   - 要求 subagent 呼叫 `save_reference_analysis(pmid, summary, methodology, key_findings, limitations, usage_sections, relevance_score)`
+     c. Subagent 完成後，`analysis.json` 已寫入 reference 目錄，`metadata.json` 標記 `analysis_completed: true`
+     d. 主 Agent 後續寫作時只使用 `analysis_summary`，不再重讀全文 → **零 context 汙染**
 4. 產出 `references/fulltext-ingestion-status.md`：
 
-| PMID | 標題 | 全文狀態 | Asset-Aware | 分析狀態 | 可用章節 | 備註 |
-| ---- | ---- | -------- | ----------- | -------- | -------- | ---- |
-| ...  | ...  | ✅       | doc_abc     | ✅       | I/M/R/D  |      |
+| PMID | 標題 | 全文狀態 | Asset-Aware | 分析狀態 | 可用章節 | 備註  |
+| ---- | ---- | -------- | ----------- | -------- | -------- | ----- |
+| ...  | ...  | ✅       | doc_abc     | ✅       | I/M/R/D  |       |
 | ...  | ...  | ❌       | —           | ⚠️       | I only   | 非 OA |
 
 **Gate**: fulltext-ingestion-status.md 已建立 + 每篇文獻標記全文狀態
@@ -422,14 +422,15 @@ supplementary:
 
 #### Introduction 段落模板（Funnel Structure）
 
-| 段落 | 功能 | 內容要求 | 引用要求 | Hook 檢查 |
-|------|------|----------|----------|-----------|
-| P1 | Broad Context | 研究領域的重要性、流行病學資料、臨床意義 | ≥2 引用（流行病學/指引） | B12（context markers） |
-| P2 | Evidence Review | 既有文獻的主要發現、方法、結論 | ≥3 引用（核心文獻） | A2（citation density） |
-| P3 | Knowledge Gap | 現有文獻的不足、矛盾、未解問題 | ≥1 引用（指出 gap 來源） | B12（gap markers） |
-| P4 | Study Objective | 本研究的目的、假說（若適用） | 0-1 引用 | B12（objective markers） |
+| 段落 | 功能            | 內容要求                                 | 引用要求                 | Hook 檢查                |
+| ---- | --------------- | ---------------------------------------- | ------------------------ | ------------------------ |
+| P1   | Broad Context   | 研究領域的重要性、流行病學資料、臨床意義 | ≥2 引用（流行病學/指引） | B12（context markers）   |
+| P2   | Evidence Review | 既有文獻的主要發現、方法、結論           | ≥3 引用（核心文獻）      | A2（citation density）   |
+| P3   | Knowledge Gap   | 現有文獻的不足、矛盾、未解問題           | ≥1 引用（指出 gap 來源） | B12（gap markers）       |
+| P4   | Study Objective | 本研究的目的、假說（若適用）             | 0-1 引用                 | B12（objective markers） |
 
 **Anti-patterns**（自動 FLAG）：
+
 - P1 直接跳到研究目的（缺 context/gap）
 - P2 只列名字不描述內容（name-dropping）
 - P3 缺乏具體 gap statement（如 "however, ... remains unclear"）
@@ -437,44 +438,47 @@ supplementary:
 
 #### Methods 段落模板（Reproducibility Structure）
 
-| 段落 | 功能 | 內容要求 | 引用要求 | Hook 檢查 |
-|------|------|----------|----------|-----------|
-| M1 | Study Design | 研究類型、期間、機構、IRB 核准 | ≥1（設計依據） | B14（ethical statements） |
-| M2 | Participants | 納入/排除標準、樣本大小計算 | ≥1（criteria 依據） | B9（past tense） |
-| M3 | Intervention/Exposure | 介入措施的詳細描述、對照組定義 | ≥1（intervention protocol） | B5（方法學 checklist） |
-| M4 | Outcome Measures | 主要/次要結果指標、測量方式、定義 | ≥2（validated instruments） | C11（Methods 引用） |
-| M5 | Statistical Analysis | 統計方法、軟體版本、顯著水準 | ≥1（統計方法引用） | B8（data-claim alignment） |
+| 段落 | 功能                  | 內容要求                          | 引用要求                    | Hook 檢查                  |
+| ---- | --------------------- | --------------------------------- | --------------------------- | -------------------------- |
+| M1   | Study Design          | 研究類型、期間、機構、IRB 核准    | ≥1（設計依據）              | B14（ethical statements）  |
+| M2   | Participants          | 納入/排除標準、樣本大小計算       | ≥1（criteria 依據）         | B9（past tense）           |
+| M3   | Intervention/Exposure | 介入措施的詳細描述、對照組定義    | ≥1（intervention protocol） | B5（方法學 checklist）     |
+| M4   | Outcome Measures      | 主要/次要結果指標、測量方式、定義 | ≥2（validated instruments） | C11（Methods 引用）        |
+| M5   | Statistical Analysis  | 統計方法、軟體版本、顯著水準      | ≥1（統計方法引用）          | B8（data-claim alignment） |
 
 **Anti-patterns**：
+
 - M1 缺 IRB/倫理核准 → B14 CRITICAL
 - M2 無樣本大小依據 → WARNING
 - M5 統計方法與 Results 不一致 → B8 CRITICAL
 
 #### Results 段落模板（Data-First Structure）
 
-| 段落 | 功能 | 內容要求 | 引用要求 | Hook 檢查 |
-|------|------|----------|----------|-----------|
-| R1 | Study Flow / Demographics | 篩選流程、基本特徵（→ Table 1） | 0（純數據） | C13（圖表引用） |
-| R2 | Primary Outcome | 主要結果、統計檢驗、效果量 + CI | 0（純數據） | B11（客觀性）、B16（效果量） |
-| R3 | Secondary Outcomes | 次要結果、亞群分析 | 0-1（方法引用） | B8（統計對齊） |
-| R4 | Subgroup / Sensitivity | 子群分析、敏感度分析（若適用） | 0（純數據） | C13（圖表引用） |
+| 段落 | 功能                      | 內容要求                        | 引用要求        | Hook 檢查                    |
+| ---- | ------------------------- | ------------------------------- | --------------- | ---------------------------- |
+| R1   | Study Flow / Demographics | 篩選流程、基本特徵（→ Table 1） | 0（純數據）     | C13（圖表引用）              |
+| R2   | Primary Outcome           | 主要結果、統計檢驗、效果量 + CI | 0（純數據）     | B11（客觀性）、B16（效果量） |
+| R3   | Secondary Outcomes        | 次要結果、亞群分析              | 0-1（方法引用） | B8（統計對齊）               |
+| R4   | Subgroup / Sensitivity    | 子群分析、敏感度分析（若適用）  | 0（純數據）     | C13（圖表引用）              |
 
 **Anti-patterns**：
+
 - R1-R4 含有 interpretive language（"suggesting", "indicating"）→ B11 WARNING
 - Results 無任何圖表引用 → C13 WARNING
 - 效果量缺 CI → B16 WARNING
 
 #### Discussion 段落模板（Interpretation Structure）
 
-| 段落 | 功能 | 內容要求 | 引用要求 | Hook 檢查 |
-|------|------|----------|----------|-----------|
-| D1 | Main Findings | 總結主要發現（不重複 Results 數字） | 0-1 | B13（main finding markers） |
-| D2-D3 | Literature Comparison | 與既有文獻的一致/矛盾之處 | ≥3（比較文獻） | C11（Discussion 引用分布） |
-| D4 | Mechanisms / Implications | 可能機制解釋、臨床/實務意義 | ≥1（機制文獻） | B13（implications markers） |
-| D5 | Limitations | 研究限制（設計、偏差、外推性） | 0-2 | B13（CRITICAL if missing） |
-| D6 | Conclusion / Future | 總結 + 未來研究方向 | 0-1 | B15（hedging 適當用量） |
+| 段落  | 功能                      | 內容要求                            | 引用要求       | Hook 檢查                   |
+| ----- | ------------------------- | ----------------------------------- | -------------- | --------------------------- |
+| D1    | Main Findings             | 總結主要發現（不重複 Results 數字） | 0-1            | B13（main finding markers） |
+| D2-D3 | Literature Comparison     | 與既有文獻的一致/矛盾之處           | ≥3（比較文獻） | C11（Discussion 引用分布）  |
+| D4    | Mechanisms / Implications | 可能機制解釋、臨床/實務意義         | ≥1（機制文獻） | B13（implications markers） |
+| D5    | Limitations               | 研究限制（設計、偏差、外推性）      | 0-2            | B13（CRITICAL if missing）  |
+| D6    | Conclusion / Future       | 總結 + 未來研究方向                 | 0-1            | B15（hedging 適當用量）     |
 
 **Anti-patterns**：
+
 - D1 重複 Results 的統計數字 → WARNING
 - D2-D3 無引用（未與文獻比較）→ C11 CRITICAL
 - D5 缺席 → B13 CRITICAL
@@ -482,25 +486,25 @@ supplementary:
 
 #### Abstract 段落模板（Structured Abstract）
 
-| 段落 | 功能 | 字數目標 | 內容要求 |
-|------|------|----------|----------|
-| A1 | Background | 40-60 words | 背景 + gap（1-2 句） |
-| A2 | Methods | 60-80 words | 設計、樣本、主要測量 |
-| A3 | Results | 80-120 words | 主要結果 + 統計數字 |
-| A4 | Conclusions | 30-50 words | 臨床意義（1-2 句，避免 overgeneralization） |
+| 段落 | 功能        | 字數目標     | 內容要求                                    |
+| ---- | ----------- | ------------ | ------------------------------------------- |
+| A1   | Background  | 40-60 words  | 背景 + gap（1-2 句）                        |
+| A2   | Methods     | 60-80 words  | 設計、樣本、主要測量                        |
+| A3   | Results     | 80-120 words | 主要結果 + 統計數字                         |
+| A4   | Conclusions | 30-50 words  | 臨床意義（1-2 句，避免 overgeneralization） |
 
 **注意**：Abstract 字數受 journal-profile.yaml 嚴格限制。
 
 #### 圖表插入規範（與 C13 Hook 整合）
 
-| 規則 | 說明 | Hook |
-|------|------|------|
-| 順序引用 | Figure 1 必須在 Figure 2 之前首次出現 | C13 |
-| Caption 完整 | ≥10 words，含 axes/variables/abbreviations | C13 |
-| Results 必有 | Results 有數據 claim → 必須引用至少 1 個圖/表 | C13 |
-| Orphan 檢測 | Manifest 有但文中未引用 → WARNING | C7d |
-| Phantom 檢測 | 文中引用但 Manifest 無 → CRITICAL | C7d |
-| 數量限制 | 不超過 journal-profile 設定的 max | C7a |
+| 規則         | 說明                                          | Hook |
+| ------------ | --------------------------------------------- | ---- |
+| 順序引用     | Figure 1 必須在 Figure 2 之前首次出現         | C13  |
+| Caption 完整 | ≥10 words，含 axes/variables/abbreviations    | C13  |
+| Results 必有 | Results 有數據 claim → 必須引用至少 1 個圖/表 | C13  |
+| Orphan 檢測  | Manifest 有但文中未引用 → WARNING             | C7d  |
+| Phantom 檢測 | 文中引用但 Manifest 無 → CRITICAL             | C7d  |
+| 數量限制     | 不超過 journal-profile 設定的 max             | C7a  |
 
 #### Citation Decision Record 規範（與 C12 Hook 整合）
 
@@ -526,6 +530,7 @@ supplementary:
 ```
 
 **工作流程**：
+
 1. Phase 2 → `save_reference_analysis()` 建立 `usage_sections`
 2. Phase 5 → 每次 `insert_citation()` 時，同步更新 `citation_decisions.json`
 3. Phase 6 → C12 Hook 驗證：每篇引用都有 justification + cited_sections 與實際吻合
@@ -752,21 +757,21 @@ Round 3 (IF still CRITICAL):
 
 #### Cascading 回溯規則
 
-| Hook C Issue             | 回溯到              | 觸發的 Hook                |
-| ------------------------ | ------------------- | -------------------------- |
-| C1 稿件不一致            | 較弱 section        | Hook B4 → Hook A           |
-| C3 N 值跨 section 不一致 | 所有含 N 的 section | Hook A → patch             |
-| C4 縮寫未定義            | 首次出現的 section  | Hook A4 → patch            |
-| C5 Wikilinks 不可解析    | 對應 section        | Hook A2 → A4               |
-| C6 總字數超標            | 最長 section        | Hook A1 → patch            |
-| C7a 圖表超限             | —                   | 合併或移至 supplementary   |
-| C7b 引用超限             | —                   | 標記低引用 refs → 用戶決定 |
-| C7c 字數精確比對         | 最長 section        | Hook A1 → patch            |
-| C7d phantom 引用         | 對應 section        | 插入缺漏圖表或移除引用     |
-| C7e Wikilink 不一致      | 對應 section        | Hook A4 → patch            |
-| C11 引用分布不均         | 缺引用的 section    | Hook A2 → 補引用           |
-| C12 引用缺決策紀錄       | —                   | 生成 citation_decisions.json |
-| C13 圖表順序/caption 問題 | 對應 section       | Hook C7d → patch           |
+| Hook C Issue              | 回溯到              | 觸發的 Hook                  |
+| ------------------------- | ------------------- | ---------------------------- |
+| C1 稿件不一致             | 較弱 section        | Hook B4 → Hook A             |
+| C3 N 值跨 section 不一致  | 所有含 N 的 section | Hook A → patch               |
+| C4 縮寫未定義             | 首次出現的 section  | Hook A4 → patch              |
+| C5 Wikilinks 不可解析     | 對應 section        | Hook A2 → A4                 |
+| C6 總字數超標             | 最長 section        | Hook A1 → patch              |
+| C7a 圖表超限              | —                   | 合併或移至 supplementary     |
+| C7b 引用超限              | —                   | 標記低引用 refs → 用戶決定   |
+| C7c 字數精確比對          | 最長 section        | Hook A1 → patch              |
+| C7d phantom 引用          | 對應 section        | 插入缺漏圖表或移除引用       |
+| C7e Wikilink 不一致       | 對應 section        | Hook A4 → patch              |
+| C11 引用分布不均          | 缺引用的 section    | Hook A2 → 補引用             |
+| C12 引用缺決策紀錄        | —                   | 生成 citation_decisions.json |
+| C13 圖表順序/caption 問題 | 對應 section        | Hook C7d → patch             |
 
 ---
 
@@ -1504,15 +1509,15 @@ Phase 轉換時：
 
 ### Hook A: post-write（每次寫完立即，最多 N rounds，N = `pipeline.hook_a_max_rounds`）
 
-| #   | 檢查項                | MCP Tool                        | 失敗行為                            | 閾值來源                              |
-| --- | --------------------- | ------------------------------- | ----------------------------------- | ------------------------------------- |
-| A1  | 字數在 target ±20%    | `count_words`                   | `patch_draft` 精簡/擴充             | `paper.sections[].word_limit`         |
-| A2  | 引用密度達標          | `get_available_citations`       | `suggest_citations` + `patch_draft` | `pipeline.writing.citation_density.*` |
-| A3  | 無 Anti-AI 模式       | `run_writing_hooks(hooks="A3")` | `patch_draft` 改寫                  | `pipeline.writing.anti_ai_strictness` |
-| A3b | AI 結構信號偵測 🆕    | `run_writing_hooks(hooks="A3B")`| `patch_draft` 改寫                  | Code-Enforced（5 項結構分析）         |
-| A4  | Wikilink 格式正確     | `validate_wikilinks`            | 自動修復                            | —                                     |
-| A5  | 語言一致性（BrE/AmE） | `run_writing_hooks(hooks="A5")` | `patch_draft` 統一拼法              | `pipeline.writing.prefer_language`    |
-| A6  | 段落重複偵測          | `run_writing_hooks(hooks="A6")` | `patch_draft` 改寫重複段            | `pipeline.writing.overlap_threshold`  |
+| #   | 檢查項                | MCP Tool                         | 失敗行為                            | 閾值來源                              |
+| --- | --------------------- | -------------------------------- | ----------------------------------- | ------------------------------------- |
+| A1  | 字數在 target ±20%    | `count_words`                    | `patch_draft` 精簡/擴充             | `paper.sections[].word_limit`         |
+| A2  | 引用密度達標          | `get_available_citations`        | `suggest_citations` + `patch_draft` | `pipeline.writing.citation_density.*` |
+| A3  | 無 Anti-AI 模式       | `run_writing_hooks(hooks="A3")`  | `patch_draft` 改寫                  | `pipeline.writing.anti_ai_strictness` |
+| A3b | AI 結構信號偵測 🆕    | `run_writing_hooks(hooks="A3B")` | `patch_draft` 改寫                  | Code-Enforced（5 項結構分析）         |
+| A4  | Wikilink 格式正確     | `validate_wikilinks`             | 自動修復                            | —                                     |
+| A5  | 語言一致性（BrE/AmE） | `run_writing_hooks(hooks="A5")`  | `patch_draft` 統一拼法              | `pipeline.writing.prefer_language`    |
+| A6  | 段落重複偵測          | `run_writing_hooks(hooks="A6")`  | `patch_draft` 改寫重複段            | `pipeline.writing.overlap_threshold`  |
 
 #### Hook A Cascading Protocol
 
@@ -1547,11 +1552,12 @@ A2 引用密度標準：Introduction ≥1/100w, Methods ≥0, Results ≥0, Disc
 A3 Anti-AI 禁止詞（~75 個）：涵蓋 Classic AI filler、Grandiose/buzzword、Metaphorical cliché、Vague academic padding、Formulaic conclusion/transition、AI-specific phrasing 六大類。常見如 `In recent years`, `plays a crucial role`, `has garnered significant attention`, `a comprehensive understanding`, `This groundbreaking` → 替換為具體內容。
 
 A3b AI 結構信號偵測（Code-Enforced）：
-  - 句長均勻度: CV < 0.25 = WARNING（AI 傾向產出等長句子）
-  - 轉折詞密度: 句首轉折詞 >20% WARNING, >35% CRITICAL
-  - 句首多樣性: unique ratio < 0.50 = WARNING
-  - 三連列舉: `X, Y, and Z` 出現 >3 次 = WARNING
-  - 段落長度均勻度: CV < 0.20 = WARNING
+
+- 句長均勻度: CV < 0.25 = WARNING（AI 傾向產出等長句子）
+- 轉折詞密度: 句首轉折詞 >20% WARNING, >35% CRITICAL
+- 句首多樣性: unique ratio < 0.50 = WARNING
+- 三連列舉: `X, Y, and Z` 出現 >3 次 = WARNING
+- 段落長度均勻度: CV < 0.20 = WARNING
 
 ---
 
@@ -1682,21 +1688,21 @@ B7c 為 ADVISORY（順序偏離可接受）。
 
 ### Hook C: post-manuscript（全稿完成後，含分層回溯，最多 N rounds，N = `pipeline.hook_c_max_rounds`）
 
-| #   | 檢查項                | MCP Tool                          | 失敗行為                   | 回溯層 | 閾值來源                                                 |
-| --- | --------------------- | --------------------------------- | -------------------------- | ------ | -------------------------------------------------------- |
-| C1  | 稿件一致性            | `check_formatting("consistency")` | `patch_draft`              | → B4   | —                                                        |
-| C2  | 投稿清單              | `check_formatting("submission")`  | 定點修正                   | —      | `required_documents.*`                                   |
-| C3  | N 值跨 section 一致   | `read_draft` × N + 數字比對       | `patch_draft` 統一         | → A    | —                                                        |
-| C4  | 縮寫首次定義          | `read_draft` + 全文掃描           | `patch_draft` 補定義       | → A    | —                                                        |
-| C5  | Wikilinks 可解析      | `scan_draft_citations`            | `save_reference_mcp` 補存  | → A4   | —                                                        |
-| C6  | 總字數合規            | `count_words`                     | 精簡超長 section           | → A1   | `word_limits.total_manuscript`                           |
-| C7  | 數量與交叉引用合規 🆕 | 見下方 C7 子項                    | 依子項處理                 | 依子項 | `assets.*`, `word_limits.*`, `references.max_references` |
-| C8  | 時間一致性            | `read_draft` × N + Agent 掃描     | `patch_draft` 更新過時描述 | → B    | —                                                        |
-| C9  | 補充材料交叉引用      | `run_writing_hooks(hooks="C9")`    | `patch_draft` 補引用       | —      | —                                                        |
-| C10 | 文獻全文+分析驗證     | `run_writing_hooks(hooks="C10")`   | 補 fulltext/analysis       | —      | —                                                        |
-| C11 | 引用分布均衡 🆕       | `run_writing_hooks(hooks="C11")`   | 重分配引用到缺引用 section | → A2   | —                                                        |
-| C12 | 引用適切性審計 🆕     | `run_writing_hooks(hooks="C12")`   | 補決策紀錄到 citation_decisions.json | — | —                                                  |
-| C13 | 圖表品質與排序 🆕     | `run_writing_hooks(hooks="C13")`   | 修正排序/補 caption        | → C7d  | —                                                        |
+| #   | 檢查項                | MCP Tool                          | 失敗行為                             | 回溯層 | 閾值來源                                                 |
+| --- | --------------------- | --------------------------------- | ------------------------------------ | ------ | -------------------------------------------------------- |
+| C1  | 稿件一致性            | `check_formatting("consistency")` | `patch_draft`                        | → B4   | —                                                        |
+| C2  | 投稿清單              | `check_formatting("submission")`  | 定點修正                             | —      | `required_documents.*`                                   |
+| C3  | N 值跨 section 一致   | `read_draft` × N + 數字比對       | `patch_draft` 統一                   | → A    | —                                                        |
+| C4  | 縮寫首次定義          | `read_draft` + 全文掃描           | `patch_draft` 補定義                 | → A    | —                                                        |
+| C5  | Wikilinks 可解析      | `scan_draft_citations`            | `save_reference_mcp` 補存            | → A4   | —                                                        |
+| C6  | 總字數合規            | `count_words`                     | 精簡超長 section                     | → A1   | `word_limits.total_manuscript`                           |
+| C7  | 數量與交叉引用合規 🆕 | 見下方 C7 子項                    | 依子項處理                           | 依子項 | `assets.*`, `word_limits.*`, `references.max_references` |
+| C8  | 時間一致性            | `read_draft` × N + Agent 掃描     | `patch_draft` 更新過時描述           | → B    | —                                                        |
+| C9  | 補充材料交叉引用      | `run_writing_hooks(hooks="C9")`   | `patch_draft` 補引用                 | —      | —                                                        |
+| C10 | 文獻全文+分析驗證     | `run_writing_hooks(hooks="C10")`  | 補 fulltext/analysis                 | —      | —                                                        |
+| C11 | 引用分布均衡 🆕       | `run_writing_hooks(hooks="C11")`  | 重分配引用到缺引用 section           | → A2   | —                                                        |
+| C12 | 引用適切性審計 🆕     | `run_writing_hooks(hooks="C12")`  | 補決策紀錄到 citation_decisions.json | —      | —                                                        |
+| C13 | 圖表品質與排序 🆕     | `run_writing_hooks(hooks="C13")`  | 修正排序/補 caption                  | → C7d  | —                                                        |
 
 #### Hook C Cascading Protocol
 
@@ -1961,32 +1967,32 @@ detailed_definition: |
 
 ## 自動決策邏輯
 
-| 情境               | 自動行為                    | 停下條件            |
-| ------------------ | --------------------------- | ------------------- |
-| Phase 0 無期刊資訊 | 用 paper_type 預設值        | 用戶提供後覆蓋      |
-| Phase 0 有 PDF/URL | 解析 + 自動填 YAML          | ⚠️ 欄位需確認       |
-| 搜尋不足           | 擴展搜尋                    | 3 輪後仍 <10 篇     |
-| Concept 65-74      | 自動修正 1 次               | 仍 <75              |
-| Hook A 字數超標    | Round 1-N 逐級修正          | N rounds 後 FLAG    |
-| Hook A 引用不足    | suggest + patch, N rds      | 無可用引用          |
-| Hook B 🔒 缺失     | patch 加入                  | 需改研究方向        |
-| Hook B5 <5 分      | patch 補細節, 2 rounds      | 2 rounds 仍 <5      |
-| Hook C CRITICAL    | cascading fix, N rds        | N rounds 後問用戶   |
-| Hook C WARNING     | patch 1 round               | LOG + continue      |
-| Hook C7 圖表超限   | 移至 supplementary          | 用戶決定刪哪個      |
-| Hook C7d phantom   | 插入缺漏圖表或移除引用      | 用戶決定            |
-| C11 引用分布不均   | 補引用到缺引用 section      | LOG + continue      |
+| 情境               | 自動行為                     | 停下條件            |
+| ------------------ | ---------------------------- | ------------------- |
+| Phase 0 無期刊資訊 | 用 paper_type 預設值         | 用戶提供後覆蓋      |
+| Phase 0 有 PDF/URL | 解析 + 自動填 YAML           | ⚠️ 欄位需確認       |
+| 搜尋不足           | 擴展搜尋                     | 3 輪後仍 <10 篇     |
+| Concept 65-74      | 自動修正 1 次                | 仍 <75              |
+| Hook A 字數超標    | Round 1-N 逐級修正           | N rounds 後 FLAG    |
+| Hook A 引用不足    | suggest + patch, N rds       | 無可用引用          |
+| Hook B 🔒 缺失     | patch 加入                   | 需改研究方向        |
+| Hook B5 <5 分      | patch 補細節, 2 rounds       | 2 rounds 仍 <5      |
+| Hook C CRITICAL    | cascading fix, N rds         | N rounds 後問用戶   |
+| Hook C WARNING     | patch 1 round                | LOG + continue      |
+| Hook C7 圖表超限   | 移至 supplementary           | 用戶決定刪哪個      |
+| Hook C7d phantom   | 插入缺漏圖表或移除引用       | 用戶決定            |
+| C11 引用分布不均   | 補引用到缺引用 section       | LOG + continue      |
 | C12 引用缺決策紀錄 | 生成 citation_decisions.json | LOG + continue      |
 | C13 圖表品質問題   | 修正排序/補 caption          | LOG + continue      |
-| Hook B7 Brief 遺漏 | patch_draft 補遺漏          | 1 round 後 LOG      |
-| Phase 6 FLAG       | 回溯 Hook B → A             | 2 cascades 後問用戶 |
-| Review MAJOR issue | patch/rewrite               | quality ≥ threshold |
-| Review 分數停滯    | 改變策略或問用戶            | 連續 2 輪無改善     |
-| Asset 缺資料       | 提示用戶提供                | 跳過該 asset        |
-| Asset 工具不可用   | Fallback（見 Sub-Pipeline） | LOG + 替代方案      |
-| 引用超過上限       | 標記低引用 refs             | 用戶決定刪哪些      |
-| Hook D 閾值微調    | ±20%                        | 超出範圍            |
-| Hook D 新增/移除   | 提出建議                    | 永遠需確認          |
+| Hook B7 Brief 遺漏 | patch_draft 補遺漏           | 1 round 後 LOG      |
+| Phase 6 FLAG       | 回溯 Hook B → A              | 2 cascades 後問用戶 |
+| Review MAJOR issue | patch/rewrite                | quality ≥ threshold |
+| Review 分數停滯    | 改變策略或問用戶             | 連續 2 輪無改善     |
+| Asset 缺資料       | 提示用戶提供                 | 跳過該 asset        |
+| Asset 工具不可用   | Fallback（見 Sub-Pipeline）  | LOG + 替代方案      |
+| 引用超過上限       | 標記低引用 refs              | 用戶決定刪哪些      |
+| Hook D 閾值微調    | ±20%                         | 超出範圍            |
+| Hook D 新增/移除   | 提出建議                     | 永遠需確認          |
 
 **必須停下**：Concept < 60（兩次仍低）、Phase 4 大綱 approve、研究方向改變、Phase 6 N 輪 cascading 仍 CRITICAL、Review 連續 2 輪無分數改善、修改 AGENTS.md 核心原則。
 
@@ -2000,42 +2006,42 @@ detailed_definition: |
 
 ### Phase × 工具矩陣
 
-| Phase               | 內部 MCP Tools                         | 外部 MCP                             | journal-profile 欄位           |
-| ------------------- | -------------------------------------- | ------------------------------------ | ------------------------------ |
-| 0 Pre-Planning      | —                                      | `fetch_webpage` 🔸                   | 產出所有欄位                   |
-| 1 Project Setup     | `create_project`, `update_settings`    | —                                    | `paper.type`, `journal.*`      |
-| 2 Literature Search | `save_reference_mcp`                   | `pubmed-search`, `zotero`            | `references.max_references`    |
-| 2.1 Fulltext Ingest | `list_saved_references`                | `asset-aware-mcp` 🔸, `pubmed-search`| —                              |
-| 3 Concept Dev       | `write_draft`, `validate_concept`      | `cgu` 🔸                             | —                              |
-| 4 Planning          | `read_draft`                           | —                                    | `paper.sections`, `assets.*`   |
-| 5 Writing           | `draft_section`, `patch_draft`, etc.   | `drawio` 🔸, `cgu` 🔸                | `word_limits.*`, `assets.*`    |
-| 6 Audit             | `check_formatting`, `count_words`      | —                                    | 所有 `pipeline.*` 閾值         |
-| 7 Review            | `read_draft`, `patch_draft`            | `cgu` 🔸                             | `pipeline.autonomous_review.*` |
-| 8 Ref Sync          | `sync_references`, `format_references` | —                                    | `references.*`                 |
-| 9 Export            | `save_document`, `verify_document`     | —                                    | `required_documents.*`         |
-| 10 Retrospective    | —                                      | —                                    | 分析所有欄位合理性             |
+| Phase               | 內部 MCP Tools                         | 外部 MCP                              | journal-profile 欄位           |
+| ------------------- | -------------------------------------- | ------------------------------------- | ------------------------------ |
+| 0 Pre-Planning      | —                                      | `fetch_webpage` 🔸                    | 產出所有欄位                   |
+| 1 Project Setup     | `create_project`, `update_settings`    | —                                     | `paper.type`, `journal.*`      |
+| 2 Literature Search | `save_reference_mcp`                   | `pubmed-search`, `zotero`             | `references.max_references`    |
+| 2.1 Fulltext Ingest | `list_saved_references`                | `asset-aware-mcp` 🔸, `pubmed-search` | —                              |
+| 3 Concept Dev       | `write_draft`, `validate_concept`      | `cgu` 🔸                              | —                              |
+| 4 Planning          | `read_draft`                           | —                                     | `paper.sections`, `assets.*`   |
+| 5 Writing           | `draft_section`, `patch_draft`, etc.   | `drawio` 🔸, `cgu` 🔸                 | `word_limits.*`, `assets.*`    |
+| 6 Audit             | `check_formatting`, `count_words`      | —                                     | 所有 `pipeline.*` 閾值         |
+| 7 Review            | `read_draft`, `patch_draft`            | `cgu` 🔸                              | `pipeline.autonomous_review.*` |
+| 8 Ref Sync          | `sync_references`, `format_references` | —                                     | `references.*`                 |
+| 9 Export            | `save_document`, `verify_document`     | —                                     | `required_documents.*`         |
+| 10 Retrospective    | —                                      | —                                     | 分析所有欄位合理性             |
 
 ### 跨 MCP 傳遞規則
 
-| 來源          | 目標       | 傳遞物         | 規則                                 |
-| ------------- | ---------- | -------------- | ------------------------------------ |
-| pubmed-search | mdpaper    | PMID           | `save_reference_mcp(pmid)` 只傳 PMID |
-| pubmed-search | asset-aware| 全文 / PMC ID  | `get_fulltext(pmcid)` → PDF/text     |
-| asset-aware   | mdpaper    | doc_id + 段落  | 解析後更新 metadata.json              |
-| zotero-keeper | mdpaper    | PMID/DOI       | 取 PMID → `save_reference_mcp()`     |
-| cgu           | concept.md | 文字建議       | Agent 整合到 `write_draft()`         |
-| drawio        | mdpaper    | XML            | `save_diagram(project, content)`     |
-| data tools    | drafts     | 表格/圖        | Agent 整合到 draft 文字              |
+| 來源          | 目標        | 傳遞物        | 規則                                 |
+| ------------- | ----------- | ------------- | ------------------------------------ |
+| pubmed-search | mdpaper     | PMID          | `save_reference_mcp(pmid)` 只傳 PMID |
+| pubmed-search | asset-aware | 全文 / PMC ID | `get_fulltext(pmcid)` → PDF/text     |
+| asset-aware   | mdpaper     | doc_id + 段落 | 解析後更新 metadata.json             |
+| zotero-keeper | mdpaper     | PMID/DOI      | 取 PMID → `save_reference_mcp()`     |
+| cgu           | concept.md  | 文字建議      | Agent 整合到 `write_draft()`         |
+| drawio        | mdpaper     | XML           | `save_diagram(project, content)`     |
+| data tools    | drafts      | 表格/圖       | Agent 整合到 draft 文字              |
 
 ### 何時跳過外部 MCP
 
-| 情境                         | 跳過             |
-| ---------------------------- | ---------------- |
-| 無 Zotero                    | zotero-keeper    |
-| Concept ≥ 75 首次通過        | CGU              |
-| 無資料集                     | table_one / plot |
-| 純 review（無 Methods flow） | drawio           |
-| 全文均不可取得（非 OA）       | asset-aware（但必須在 metadata 記錄⚠️） |
+| 情境                         | 跳過                                    |
+| ---------------------------- | --------------------------------------- |
+| 無 Zotero                    | zotero-keeper                           |
+| Concept ≥ 75 首次通過        | CGU                                     |
+| 無資料集                     | table_one / plot                        |
+| 純 review（無 Methods flow） | drawio                                  |
+| 全文均不可取得（非 OA）      | asset-aware（但必須在 metadata 記錄⚠️） |
 
 ---
 

@@ -36,19 +36,19 @@ Or in VS Code: `Ctrl+Shift+P` → `Extensions: Install from VSIX...`
 2. 在 Agent Mode 輸入：「全自動寫論文」
 3. 系統自動執行 11-Phase Pipeline：
 
-| Phase | 名稱           | 說明                           |
-| ----- | -------------- | ------------------------------ |
-| 1     | 文獻搜索       | 並行搜尋 + save_reference_mcp  |
-| 2     | 全文閱讀       | asset-aware + fulltext         |
-| 3     | 概念發展       | concept.md 撰寫                |
-| 4     | Novelty 驗證   | 三輪評分 ≥ 75                  |
-| 5     | 逐節撰寫       | Introduction → Discussion      |
-| 6     | 引用同步       | sync_references                |
-| 7     | 同行審查       | min_rounds=2 + R1-R6 gates     |
-| 8     | 全稿一致性     | manuscript consistency         |
-| 9     | 匯出           | docx + pdf（CRITICAL Gate）    |
-| 10    | Meta-Learning  | D1-D9 自我改進                 |
-| 11    | 提交           | git commit+push（CRITICAL Gate）|
+| Phase | 名稱          | 說明                             |
+| ----- | ------------- | -------------------------------- |
+| 1     | 文獻搜索      | 並行搜尋 + save_reference_mcp    |
+| 2     | 全文閱讀      | asset-aware + fulltext           |
+| 3     | 概念發展      | concept.md 撰寫                  |
+| 4     | Novelty 驗證  | 三輪評分 ≥ 75                    |
+| 5     | 逐節撰寫      | Introduction → Discussion        |
+| 6     | 引用同步      | sync_references                  |
+| 7     | 同行審查      | min_rounds=2 + R1-R6 gates       |
+| 8     | 全稿一致性    | manuscript consistency           |
+| 9     | 匯出          | docx + pdf（CRITICAL Gate）      |
+| 10    | Meta-Learning | D1-D9 自我改進                   |
+| 11    | 提交          | git commit+push（CRITICAL Gate） |
 
 ## Usage
 
@@ -90,33 +90,33 @@ Capability → Skill → Hook → MCP Tool
 
 ### 🔔 Hook Architecture（76 checks — 34 Code-Enforced / 42 Agent-Driven）
 
-| Hook                | 時機              | 功能                                   |
-| ------------------- | ----------------- | -------------------------------------- |
-| Copilot A1-6+A3b    | 每段寫完          | 字數、引用密度、Anti-AI、語言一致      |
-| Copilot B1-16       | 每節寫完          | 概念一致、統計、時態、段落品質         |
-| Copilot C1-13       | 全稿完成          | 全稿一致性、引用分布、圖表品質         |
-| Copilot D1-D9       | Phase 10          | MetaLearningEngine 自我改進            |
-| Copilot E1-5        | Phase 7 每輪      | EQUATOR 報告指引                       |
-| Copilot F1-4        | post-manuscript   | DataArtifactTracker                    |
-| Review R1-R6        | Phase 7 submit    | ReviewHooksEngine 審查品質 HARD GATE   |
-| General G9          | pre-commit        | Git 狀態檢查                           |
-| Pre-Commit P1-P8    | Git commit 前     | Safety net                             |
-| General G1-G8       | Git commit 前     | Memory、README、CHANGELOG 等           |
+| Hook             | 時機            | 功能                                 |
+| ---------------- | --------------- | ------------------------------------ |
+| Copilot A1-6+A3b | 每段寫完        | 字數、引用密度、Anti-AI、語言一致    |
+| Copilot B1-16    | 每節寫完        | 概念一致、統計、時態、段落品質       |
+| Copilot C1-13    | 全稿完成        | 全稿一致性、引用分布、圖表品質       |
+| Copilot D1-D9    | Phase 10        | MetaLearningEngine 自我改進          |
+| Copilot E1-5     | Phase 7 每輪    | EQUATOR 報告指引                     |
+| Copilot F1-4     | post-manuscript | DataArtifactTracker                  |
+| Review R1-R6     | Phase 7 submit  | ReviewHooksEngine 審查品質 HARD GATE |
+| General G9       | pre-commit      | Git 狀態檢查                         |
+| Pre-Commit P1-P8 | Git commit 前   | Safety net                           |
+| General G1-G8    | Git commit 前   | Memory、README、CHANGELOG 等         |
 
 ### Bundled Skills (26)
 
-| 類別 | Skills                                                        |
-| ---- | ------------------------------------------------------------- |
-| 核心 | auto-paper, draft-writing, concept-development                |
-| 搜尋 | literature-review, parallel-search                            |
-| 管理 | project-management, reference-management, project-init        |
-| 品質 | concept-validation, manuscript-review                         |
-| 分析 | academic-debate, idea-validation                              |
-| 匯出 | word-export, submission-preparation                           |
-| Git  | git-precommit (P1-P8), git-doc-updater                       |
-| 維護 | memory-updater, memory-checkpoint, changelog-updater          |
-| 開發 | ddd-architect, code-refactor, code-reviewer, test-generator   |
-| 文件 | readme-updater, readme-i18n, roadmap-updater                  |
+| 類別 | Skills                                                      |
+| ---- | ----------------------------------------------------------- |
+| 核心 | auto-paper, draft-writing, concept-development              |
+| 搜尋 | literature-review, parallel-search                          |
+| 管理 | project-management, reference-management, project-init      |
+| 品質 | concept-validation, manuscript-review                       |
+| 分析 | academic-debate, idea-validation                            |
+| 匯出 | word-export, submission-preparation                         |
+| Git  | git-precommit (P1-P8), git-doc-updater                      |
+| 維護 | memory-updater, memory-checkpoint, changelog-updater        |
+| 開發 | ddd-architect, code-refactor, code-reviewer, test-generator |
+| 文件 | readme-updater, readme-i18n, roadmap-updater                |
 
 ### MCP Tools (85)
 

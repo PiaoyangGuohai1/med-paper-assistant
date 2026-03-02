@@ -20,11 +20,11 @@ agents:
 
 ## 三模型審查矩陣
 
-| Reviewer | 模型 | 專注面向 |
-|----------|------|----------|
-| `methodology-reviewer` | Claude Opus 4.6 | 研究設計、偏差控制、因果推論 |
-| `domain-reviewer` | Gemini 2.5 Pro | 科學準確性、文獻覆蓋、臨床相關性 |
-| `statistics-reviewer` | GPT-5.3 Codex | 統計方法、效果量、多重比較 |
+| Reviewer               | 模型            | 專注面向                         |
+| ---------------------- | --------------- | -------------------------------- |
+| `methodology-reviewer` | Claude Opus 4.6 | 研究設計、偏差控制、因果推論     |
+| `domain-reviewer`      | Gemini 2.5 Pro  | 科學準確性、文獻覆蓋、臨床相關性 |
+| `statistics-reviewer`  | GPT-5.3 Codex   | 統計方法、效果量、多重比較       |
 
 ## 限制
 
@@ -103,6 +103,7 @@ reviewers:
 ### Phase 4: 交叉驗證
 
 檢查 3 份報告之間是否有**矛盾**：
+
 - 如果兩個 reviewer 對同一問題給出相反意見 → 標記為 "DISPUTED"，列出雙方論點
 - 如果 3 個 reviewer 都同意某問題 → 標記為 "CONSENSUS"，優先處理
 
@@ -113,6 +114,7 @@ reviewers:
 > @review-orchestrator 請審查目前的草稿
 
 Orchestrator 會自動：
+
 1. 讀取專案上下文
 2. 派遣 3 個 reviewer
 3. 產出綜合報告

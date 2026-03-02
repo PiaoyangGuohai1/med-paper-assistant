@@ -71,17 +71,17 @@ Pipeline 完成後的閉環分析。按順序執行：
 
 ## D1-D9 分析清單
 
-| Step | 名稱 | 資料來源 | 產出 |
-|------|------|---------|------|
-| D1 | Hook 效能統計 | `.audit/hook-effectiveness.json` | 觸發率、修正率、誤報率 |
-| D2 | 品質維度分析 | `.audit/quality-scorecard.json` | 弱項、缺項、趨勢 |
-| D3 | Hook 自我改進 | D1 統計 | ThresholdAdjustment (±20%) |
-| D4 | SKILL 改進 | D1+D2 | Lessons Learned 更新 |
-| D5 | Instruction 改進 | D1+D2 | SKILL.md 建議 |
-| D6 | 審計軌跡 | 全部 | `.audit/meta-learning-audit.yaml` |
-| D7 | Review Retrospective | `review-report-*.md` | Reviewer 指令演化 |
-| D8 | EQUATOR Retrospective | `equator-compliance-*.md` | Checklist 準確性改善 |
-| D9 | Tool Description | Tool 使用模式 | 工具描述建議 |
+| Step | 名稱                  | 資料來源                         | 產出                              |
+| ---- | --------------------- | -------------------------------- | --------------------------------- |
+| D1   | Hook 效能統計         | `.audit/hook-effectiveness.json` | 觸發率、修正率、誤報率            |
+| D2   | 品質維度分析          | `.audit/quality-scorecard.json`  | 弱項、缺項、趨勢                  |
+| D3   | Hook 自我改進         | D1 統計                          | ThresholdAdjustment (±20%)        |
+| D4   | SKILL 改進            | D1+D2                            | Lessons Learned 更新              |
+| D5   | Instruction 改進      | D1+D2                            | SKILL.md 建議                     |
+| D6   | 審計軌跡              | 全部                             | `.audit/meta-learning-audit.yaml` |
+| D7   | Review Retrospective  | `review-report-*.md`             | Reviewer 指令演化                 |
+| D8   | EQUATOR Retrospective | `equator-compliance-*.md`        | Checklist 準確性改善              |
+| D9   | Tool Description      | Tool 使用模式                    | 工具描述建議                      |
 
 ## Hook 傳播程序（D3 產出新 Hook 時）
 
@@ -119,16 +119,20 @@ hook_spec:
 ## 🔄 Meta-Learning 分析結果
 
 ### 自動套用的調整
+
 - [hook_id]: parameter old_value → new_value (原因)
 
 ### 需要確認的建議
+
 1. [建議描述] — 影響範圍: [檔案列表]
    → 選項: 套用 / 跳過 / 修改
 
 ### Lessons Learned
+
 - [category]: [lesson] (來源: [source])
 
 ### 品質趨勢
+
 - 強項: [dimensions with score ≥ 8]
 - 弱項: [dimensions with score < 6]
 - 建議重點: [next paper focus areas]
@@ -136,17 +140,17 @@ hook_spec:
 
 ## 安全邊界
 
-| 操作 | 權限 | 由誰執行 | 約束層 |
-|------|------|---------|--------|
-| 閾值 ±20% | ✅ 自動 | `evolve_constraint()` MCP tool | **L2 Code-Enforced** |
-| Pending Evolution 套用 | ✅ 自動 | `apply_pending_evolutions()` MCP tool | **L2 Code-Enforced** |
-| 閾值 > ±20% | ⚠️ 回報 | 主 Agent + 用戶確認 | L1 + L2 |
-| 新增/移除 Hook | ⚠️ 回報 | 主 Agent + 用戶確認 | L1 + L2 |
-| SKILL.md 更新 | ⚠️ 回報 | 主 Agent 執行 | L1 |
-| Hook 傳播（5 檔案） | ⚠️ 回報 | 主 Agent 執行 | L1 + L2 |
-| 直接改檔案 | ❌ 無權限 | — | 無 `editFiles` 工具 |
-| 修改 CONSTITUTION | ❌ 禁止 | — | L2 + 無工具 |
-| 修改 🔒 保護內容 | ❌ 禁止 | — | L2 + 無工具 |
-| 修改 Hook D 自身邏輯 | ❌ 禁止 | — | L2 + 無工具 |
+| 操作                   | 權限      | 由誰執行                              | 約束層               |
+| ---------------------- | --------- | ------------------------------------- | -------------------- |
+| 閾值 ±20%              | ✅ 自動   | `evolve_constraint()` MCP tool        | **L2 Code-Enforced** |
+| Pending Evolution 套用 | ✅ 自動   | `apply_pending_evolutions()` MCP tool | **L2 Code-Enforced** |
+| 閾值 > ±20%            | ⚠️ 回報   | 主 Agent + 用戶確認                   | L1 + L2              |
+| 新增/移除 Hook         | ⚠️ 回報   | 主 Agent + 用戶確認                   | L1 + L2              |
+| SKILL.md 更新          | ⚠️ 回報   | 主 Agent 執行                         | L1                   |
+| Hook 傳播（5 檔案）    | ⚠️ 回報   | 主 Agent 執行                         | L1 + L2              |
+| 直接改檔案             | ❌ 無權限 | —                                     | 無 `editFiles` 工具  |
+| 修改 CONSTITUTION      | ❌ 禁止   | —                                     | L2 + 無工具          |
+| 修改 🔒 保護內容       | ❌ 禁止   | —                                     | L2 + 無工具          |
+| 修改 Hook D 自身邏輯   | ❌ 禁止   | —                                     | L2 + 無工具          |
 
 **設計原則**：meta-learner 只能透過 MCP tools 修改狀態（有 Code-Enforced 驗證），或回報給主 Agent（有 L1 Agent-Driven 約束）。雙重保險，不留漏洞。

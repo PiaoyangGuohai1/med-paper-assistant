@@ -33,26 +33,27 @@ tools:
 
 ### CGU 創意思考
 
-| 工具 | 用途 |
-|------|------|
-| `deep_think(topic, depth)` | 深度思考找出概念弱點 |
-| `spark_collision(idea_a, idea_b)` | 碰撞兩個對立觀點 |
-| `generate_ideas(topic, n)` | 廣泛發想替代方案 |
-| `multi_agent_brainstorm(topic)` | 多角色辯論 |
+| 工具                              | 用途                 |
+| --------------------------------- | -------------------- |
+| `deep_think(topic, depth)`        | 深度思考找出概念弱點 |
+| `spark_collision(idea_a, idea_b)` | 碰撞兩個對立觀點     |
+| `generate_ideas(topic, n)`        | 廣泛發想替代方案     |
+| `multi_agent_brainstorm(topic)`   | 多角色辯論           |
 
 ### 文獻驗證
 
-| 工具 | 用途 |
-|------|------|
-| `unified_search(query)` | 搜尋是否已有類似研究 |
-| `find_related_articles(pmid)` | 找出可能的先行研究 |
-| `search_local_references(query)` | 搜尋已儲存文獻 |
+| 工具                             | 用途                 |
+| -------------------------------- | -------------------- |
+| `unified_search(query)`          | 搜尋是否已有類似研究 |
+| `find_related_articles(pmid)`    | 找出可能的先行研究   |
+| `search_local_references(query)` | 搜尋已儲存文獻       |
 
 ## 工作流
 
 ### 輸入
 
 主 Agent 會提供：
+
 - `concept.md` 內容
 - 已有文獻列表
 - 當前 novelty 評分（如有）
@@ -60,6 +61,7 @@ tools:
 ### Step 1: 概念理解
 
 閱讀 concept.md，提取：
+
 - 核心假說
 - 主要創新宣稱
 - 研究設計概要
@@ -77,6 +79,7 @@ deep_think(
 ```
 
 檢查項目：
+
 1. **Already Done?** — 是否已有人做過相同/相似研究？
 2. **Incremental vs Novel?** — 是漸進式改良還是真正創新？
 3. **So What?** — 即使結果如預期，臨床意義是什麼？
@@ -92,6 +95,7 @@ spark_collision(
 ```
 
 檢查項目：
+
 1. **內部有效性** — 混淆因子、選擇偏差、測量偏差
 2. **外部有效性** — 結果能推廣嗎？
 3. **樣本量合理性** — power analysis 是否充分？
@@ -105,6 +109,7 @@ unified_search(query="[核心假說的關鍵詞]")
 ```
 
 確認是否有：
+
 - 直接矛盾的已發表研究
 - 已失敗的類似嘗試
 - 更強的替代假說
@@ -112,6 +117,7 @@ unified_search(query="[核心假說的關鍵詞]")
 ### Step 5: 替代方案發想（如概念較弱）
 
 若 novelty < 70 或發現重大弱點：
+
 ```
 generate_ideas(
   topic="如何強化 [研究主題] 的創新性和方法學",
@@ -125,30 +131,36 @@ generate_ideas(
 ## 概念挑戰報告
 
 ### 整體評估
+
 - 概念強度: ⬛⬛⬛⬜⬜ (3/5)
 - Novelty 可信度: HIGH / MODERATE / LOW
 - 方法學嚴謹性: HIGH / MODERATE / LOW
 
 ### 🔴 重大挑戰 (Must Address)
+
 1. **[挑戰標題]**
    - 問題: ...
    - 證據: ... (PMID: xxx)
    - 建議: ...
 
-### 🟡 中度疑慮 (Should Address)  
+### 🟡 中度疑慮 (Should Address)
+
 1. **[疑慮標題]**
    - 問題: ...
    - 建議: ...
 
 ### 🟢 優勢確認
+
 1. **[優勢]**: ...
 
 ### 💡 強化建議
+
 | 面向 | 當前 | 建議改為 | 預期效果 |
-|------|------|----------|----------|
-| ... | ... | ... | ... |
+| ---- | ---- | -------- | -------- |
+| ...  | ...  | ...      | ...      |
 
 ### 選項
+
 - **A. 直接寫** — 概念夠強，可繼續
 - **B. 修正後寫** — 需先修正 [具體項目]
 - **C. 用 CGU 重新發想** — 概念需要根本性調整

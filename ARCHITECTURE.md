@@ -194,8 +194,8 @@ verify_evolution() → 跨專案演化驗證
 | **QualityScorecard**         | `quality_scorecard.py`          | 8 維度品質評分持久化（citation, methodology, text, concept, format, figure, equator, reproducibility） |
 | **HookEffectivenessTracker** | `hook_effectiveness_tracker.py` | 追蹤 76 個 Hook 的 trigger/pass/fix/FP 事件，計算效能指標                                              |
 | **MetaLearningEngine**       | `meta_learning_engine.py`       | D1-D9 分析引擎：統計分析 → 閾值建議 → 經驗萃取 → 審計紀錄 → 品質趨勢                                   |
-| **WritingHooksEngine**       | `writing_hooks/` (package)      | Code-enforced hooks：A/B/C/F/G/P 系列，Mixin 架構；12 子模組                                          |
-| **ReviewHooksEngine**        | `review_hooks.py`               | R1-R6 審查品質 Hook：報告深度、回應完整、EQUATOR、追蹤性、Anti-AI、引用預算（Phase 7 HARD GATE） |
+| **WritingHooksEngine**       | `writing_hooks/` (package)      | Code-enforced hooks：A/B/C/F/G/P 系列，Mixin 架構；12 子模組                                           |
+| **ReviewHooksEngine**        | `review_hooks.py`               | R1-R6 審查品質 Hook：報告深度、回應完整、EQUATOR、追蹤性、Anti-AI、引用預算（Phase 7 HARD GATE）       |
 | **EvolutionVerifier**        | `evolution_verifier.py`         | 跨專案演化驗證：收集所有專案 `.audit/` 數據，產生演化證據報告                                          |
 | **DomainConstraintEngine**   | `domain_constraint_engine.py`   | Triad-inspired JSON 約束系統：per paper type 結構化約束、Sand Spreader 驗證、約束演化                  |
 | **PipelineGateValidator**    | `pipeline_gate_validator.py`    | Phase Gate 驗證器：確保每個 Phase 完成必要的品質檢查才能進入下一階段                                   |
@@ -214,9 +214,9 @@ verify_evolution() → 跨專案演化驗證
 
 | 類型                  | 時機            | 數量 | 重點                                                                                                                                                                                     |
 | --------------------- | --------------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **A** post-write      | 每次寫入後      | 7    | 字數、引用密度、Anti-AI、Wikilink、語言一致性(A5)、段落重複(A6)、AI結構信號(A3b)                                                                                                          |
+| **A** post-write      | 每次寫入後      | 7    | 字數、引用密度、Anti-AI、Wikilink、語言一致性(A5)、段落重複(A6)、AI結構信號(A3b)                                                                                                         |
 | **B** post-section    | section 完成後  | 16   | 概念一致、🔒保護、方法學、寫作順序、Brief 合規、統計對齊(B8)、時態(B9)、段落品質(B10)、Results客觀性(B11)、Intro結構(B12)、Discussion結構(B13)、倫理聲明(B14)、Hedging(B15)、效果量(B16) |
-| **C** post-manuscript | 全稿完成後      | 13   | 全稿一致性、投稿清單、數量交叉引用、時間一致性、補充材料交叉引用(C9)、全文驗證(C10)、引用分布(C11)、引用決策審計(C12)、圖表品質(C13)                                                      |
+| **C** post-manuscript | 全稿完成後      | 13   | 全稿一致性、投稿清單、數量交叉引用、時間一致性、補充材料交叉引用(C9)、全文驗證(C10)、引用分布(C11)、引用決策審計(C12)、圖表品質(C13)                                                     |
 | **D** meta-learning   | Phase 10        | 9    | SKILL/Hook 自我改進、Review Retro、EQUATOR Retro、D9 品質趨勢                                                                                                                            |
 | **E** EQUATOR 合規    | Phase 7 每輪    | 5    | 報告指引偵測、checklist 驗證、合規報告                                                                                                                                                   |
 | **F** data-artifacts  | post-manuscript | 4    | 溯源追蹤、manifest 一致、交叉引用、統計驗證                                                                                                                                              |

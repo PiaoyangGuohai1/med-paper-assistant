@@ -32,23 +32,23 @@ user-invocable: false
 
 ### 全文取得
 
-| 工具 | 用途 |
-|------|------|
-| `get_fulltext(pmcid, sections)` | 取得開放取用全文（分段） |
-| `fetch_article_details(pmids)` | 取得詳細 metadata |
-| `get_text_mined_terms(pmid)` | 取得標註（基因、疾病、藥物） |
+| 工具                            | 用途                         |
+| ------------------------------- | ---------------------------- |
+| `get_fulltext(pmcid, sections)` | 取得開放取用全文（分段）     |
+| `fetch_article_details(pmids)`  | 取得詳細 metadata            |
+| `get_text_mined_terms(pmid)`    | 取得標註（基因、疾病、藥物） |
 
 ### 文本挖掘
 
-| 工具 | 用途 |
-|------|------|
+| 工具                                        | 用途           |
+| ------------------------------------------- | -------------- |
 | `get_text_mined_terms(pmid, semantic_type)` | 按類型過濾標註 |
 
 ### 文獻管理
 
-| 工具 | 用途 |
-|------|------|
-| `save_reference_mcp(pmid)` | 儲存文獻到專案 |
+| 工具                             | 用途           |
+| -------------------------------- | -------------- |
+| `save_reference_mcp(pmid)`       | 儲存文獻到專案 |
 | `search_local_references(query)` | 搜尋已儲存文獻 |
 
 ## 工作流
@@ -56,14 +56,17 @@ user-invocable: false
 ### 輸入
 
 主 Agent 會提供：
+
 - PMID 或 PMCID 列表
 - 分析焦點（例如：「提取 Methods 和 Results」「關注副作用數據」）
 - 專案上下文（研究主題、PICO）
 
 ### Step 1: 全文取得
+
 ```
 get_fulltext(pmcid="PMCxxxxxxx", sections="methods,results")
 ```
+
 若無 PMC 全文，fallback 至 `fetch_article_details` 取得摘要。
 
 ### Step 2: 結構化提取
@@ -78,41 +81,41 @@ article:
   first_author: "..."
   year: 2024
   journal: "..."
-  
+
   study_design: "RCT / cohort / case-control / ..."
-  
+
   population:
     n: 120
     inclusion: "..."
     exclusion: "..."
-    
+
   intervention: "..."
   comparator: "..."
-  
+
   primary_outcome:
     measure: "..."
     result: "..."
     effect_size: "OR 2.3 (95% CI 1.1-4.8)"
     p_value: 0.03
-    
+
   secondary_outcomes:
     - measure: "..."
       result: "..."
-      
+
   key_findings:
     - "..."
     - "..."
-    
+
   limitations:
     - "..."
-    
+
   relevance_to_project: "HIGH / MEDIUM / LOW"
   relevance_reason: "..."
-  
+
   useful_for_sections:
-    - introduction  # 背景引用
-    - methods       # 方法學參考
-    - discussion    # 比較討論
+    - introduction # 背景引用
+    - methods # 方法學參考
+    - discussion # 比較討論
 ```
 
 ### Step 3: 比較分析（多篇時）
@@ -136,17 +139,21 @@ comparison:
 ## 全文分析報告
 
 ### 分析摘要
+
 - 分析文獻: N 篇
 - 有全文: N 篇
 - 僅摘要: N 篇
 
 ### 各文獻結構化摘要
+
 [上述 YAML 格式]
 
 ### 跨文獻比較 (if applicable)
+
 [comparison YAML]
 
 ### 建議
+
 - 最相關的文獻: PMIDx (原因)
 - 建議深入閱讀: PMIDy (原因)
 ```
