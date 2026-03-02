@@ -23,5 +23,5 @@ def auto_checkpoint_writing(filename: str, content: str, operation: str) -> None
             operation=operation,
             word_count=len(content.split()),
         )
-    except Exception:
-        pass  # Never fail the write due to checkpoint issues
+    except Exception:  # nosec B110 — checkpoint must not crash writes
+        pass
