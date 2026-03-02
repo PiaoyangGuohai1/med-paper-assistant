@@ -41,9 +41,27 @@
 - v0.3.10: Author Info System, Data Artifact Provenance, Hook F1-F4
 - v0.3.9: Multi-Stage Review, 42 Hooks, 11-Phase Pipeline
 
+- **v0.4.0 Bug Report (5 bugs fixed)**:
+  - Bug 1 (Critical): `_compute_manuscript_hash()` hash ALL `drafts/*.md` — fixed review deadlock
+  - Bug 2 (Critical): `citeproc-py` try/except lazy import + `_CITEPROC_AVAILABLE` flag — moved to core dep
+  - Bug 3 (Medium): `start_document_session` template_name optional — blank document fallback
+  - Bug 4 (Medium): Hook A1 `_strip_frontmatter()`, A6 statistical notation regex exclusion
+  - Bug 5 (Minor): export_pdf citeproc chain — covered by Bug 2 fix
+  - `reset_review_loop` MCP tool for stuck state recovery
+  - Tests: **730 passed** (Python), **35 passed** (VSX vitest)
+- **VSX Extension v0.4.0 Completeness**:
+  - agents/ directory: 9 `.agent.md` files bundled
+  - `autoScaffoldIfNeeded()`: auto-detect missing skills/agents/prompts
+  - `build.sh` + `validate-build.sh`: agent copy + validation steps
+  - VSIX: `medpaper-assistant-0.4.0.vsix` (615 KB, 224 files)
+- **macOS / VS Code Insiders 相容性**:
+  - MCP env 繼承 PATH/HOME/SHELL/LANG/USERPROFILE（修復 homebrew 找不到 uv/git）
+  - `getPythonArgs` 支援 `python3.12` 等版本化名稱
+  - 新增 versioned Python 測試
+
 ## Doing
 
-- Segmented Git commits + tag 0.4.0 + marketplace publish
+- Git commit + marketplace publish
 
 ## Next
 

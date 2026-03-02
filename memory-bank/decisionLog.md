@@ -1,5 +1,27 @@
 # Decision Log
 
+## [2026-03-02] v0.4.0 Bug Fixes + macOS Compatibility
+
+### 背景
+
+v0.4.0 Bug Report 報告了 5 個 Bug。驗證後發現 Bug 1, 2, 5 已在先前修復，Bug 3, 4 需新修復。同時評估 macOS + VS Code Insiders 相容性。
+
+### 決定
+
+1. **Bug 3 修復**：`start_document_session` 的 `template_name` 改為可選參數，空值時呼叫 `create_blank_document()`
+2. **Bug 4 修復**：Hook A1 加入 `_strip_frontmatter()` 排除 YAML frontmatter；A6 加入統計標記 regex 排除
+3. **macOS MCP env**：子程序環境繼承 `PATH/HOME/SHELL/LANG/USERPROFILE`，解決 homebrew 工具找不到問題
+4. **`getPythonArgs` 擴展**：用 regex `/^python3(\.\d+)?$/` 匹配版本化 Python（如 `python3.12`）
+5. **VS Code Insiders 不需特別處理**：API 完全相同，`.vscode/` 設定共用
+
+### 關鍵技術決定
+
+| 問題                    | 選項                                                         | 決定              | 理由                                                                |
+| ----------------------- | ------------------------------------------------------------ | ----------------- | ------------------------------------------------------------------- |
+| MCP env 策略            | A. 只傳 PYTHONPATH / B. 繼承全部 process.env / C. 選擇性繼承 | **C. 選擇性繼承** | 全部繼承可能洩漏敏感變數；只傳 PYTHONPATH 在 macOS 上 uv/git 找不到 |
+| Insiders 偵測           | A. 偵測 product name / B. 不做                               | **B. 不做**       | Insiders 和 Stable 使用完全相同的 Extension API 和 `.vscode/` 目錄  |
+| subagent 報告 18 issues | A. 全部修 / B. 甄別後修真正問題                              | **B. 甄別**       | 大部分是誤報（path.delimiter 已跨平台、fs.existsSync 不會炸）       |
+
 ## [2026-02-28] v0.4.0 文件計數動態同步與 Hook 架構完善
 
 ### 背景
@@ -14,12 +36,12 @@
 
 ### 關鍵技術決定
 
-| 問題 | 選項 | 決定 | 理由 |
-| --- | --- | --- | --- |
-| 計數方法 | A. Regex / B. AST | **B. AST** | `tool_logging.py` docstring 有 `@mcp.tool()` 示例，regex 會誤計為 89（實際 85） |
-| auto-paper-guide "42" | A. 同步到 76 / B. 保持 42 | **B. 保持 42** | 該數字指 Agent-Driven 子集，非總數。加註釋說明 |
-| 文件表格對齊 | A. format string / B. regex group capture | **B. `\g<1>`** | 保留原始 markdown 格式，避免空格錯亂 |
-| EXPECTED_HOOKS 排除 D/G | A. 全部加入 / B. 排除 | **B. 排除** | D1-D9 是 meta-learning 引擎本身（自引用），G1-G9 在 pre-commit 獨立追蹤 |
+| 問題                    | 選項                                      | 決定           | 理由                                                                            |
+| ----------------------- | ----------------------------------------- | -------------- | ------------------------------------------------------------------------------- |
+| 計數方法                | A. Regex / B. AST                         | **B. AST**     | `tool_logging.py` docstring 有 `@mcp.tool()` 示例，regex 會誤計為 89（實際 85） |
+| auto-paper-guide "42"   | A. 同步到 76 / B. 保持 42                 | **B. 保持 42** | 該數字指 Agent-Driven 子集，非總數。加註釋說明                                  |
+| 文件表格對齊            | A. format string / B. regex group capture | **B. `\g<1>`** | 保留原始 markdown 格式，避免空格錯亂                                            |
+| EXPECTED_HOOKS 排除 D/G | A. 全部加入 / B. 排除                     | **B. 排除**    | D1-D9 是 meta-learning 引擎本身（自引用），G1-G9 在 pre-commit 獨立追蹤         |
 
 ### 成果
 

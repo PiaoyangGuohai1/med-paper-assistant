@@ -5,6 +5,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-03-02
+
+### Added
+
+- **VSX Extension Completeness**:
+  - `agents/` directory with 9 bundled `.agent.md` files (concept-challenger, domain-reviewer, literature-searcher, meta-learner, methodology-reviewer, paper-reviewer, reference-analyzer, review-orchestrator, statistics-reviewer)
+  - `autoScaffoldIfNeeded()` — auto-detect missing skills/agents/prompts and prompt user
+  - `build.sh` step 2d — agent bundle copy
+  - `validate-build.sh` V3c — agent sync validation
+  - `validateBundledAgents()` utility function
+  - `mdpaper.audit` bundled prompt
+  - Agent sync tests (vitest)
+- **macOS / VS Code Insiders Compatibility**:
+  - MCP environment inherits `PATH`, `HOME`, `SHELL`, `LANG`, `USERPROFILE` — fixes homebrew `uv`/`uvx`/`git` discovery on macOS
+  - `getPythonArgs` supports versioned Python names (`python3.12`, `python3.11`) via regex
+  - New test: versioned Python (homebrew/macOS) path matching
+- **Dynamic Count Sync Script** (`scripts/sync_repo_counts.py`): AST-based counting of all repo metrics, auto-sync into 7 docs, 43 stale counts auto-fixed
+- **ReviewHooksEngine** (`R1-R6`): Review report depth, author response completeness, EQUATOR compliance, review-fix traceability, post-review anti-AI, citation budget
+- **EXPECTED_HOOKS**: 40→58 (added B9-B16, C10-C13, R1-R6)
+- **`reset_review_loop` MCP tool**: Stuck review state recovery
+- **`citeproc-py`**: Moved to core dependencies (previously optional)
+
+### Fixed
+
+- **Bug 1 (Critical)**: `_compute_manuscript_hash()` now hashes ALL `.md` files in `drafts/` via sorted glob — resolves review pipeline deadlock when using multi-file drafts
+- **Bug 2 (Critical)**: `citeproc-py` import failure crashes — added try/except lazy import with `_CITEPROC_AVAILABLE` flag at all 3 usage points
+- **Bug 3 (Medium)**: `start_document_session` required `template_name` even when no templates available — now optional, creates blank document when omitted
+- **Bug 4 (Medium)**: Writing Hooks false positives:
+  - A1: Added `_strip_frontmatter()` to exclude YAML frontmatter from word counts
+  - A6: Added statistical notation regex exclusion (F-tests, p-values, η²p, CI, OR/HR/RR, β, SD/SE) from n-gram overlap detection
+- **Bug 5 (Minor)**: `export_pdf` citeproc crash chain — covered by Bug 2 lazy import guards
+- **MCP server env**: Child processes (uv/uvx/git) now inherit system PATH on macOS — prevents "command not found" errors
+- **Hash mismatch error messages**: Added diagnostic info showing current vs expected hashes
+
+### Changed
+
+- MCP tools: **85** (review/ 20→21 with reset_review_loop)
+- Hook architecture: **76 checks** (34 Code-Enforced / 42 Agent-Driven)
+- Python tests: 698 → **730 passed** (excl. external-dep tests)
+- VSX vitest: 34 → **35 passed**
+- VSIX package: `medpaper-assistant-0.4.0.vsix` (615 KB, 224 files, 9 agents)
+- 4 outdated bundled skills synced from source
+
 ## [0.3.12] - 2026-02-27
 
 ### Added

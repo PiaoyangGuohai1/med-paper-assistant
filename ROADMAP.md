@@ -400,6 +400,9 @@ EMPTY → EXPLORATION → PROJECT
 | **Diagnostics**          | 引用缺失警告、wikilink 斷鏈、字數超限         | ⭐⭐⭐⭐   | 📋   |
 | **Webview Dashboard**    | 內嵌 Next.js Dashboard（取代 Simple Browser） | ⭐⭐⭐     | 📋   |
 | **File Decorations**     | 專案狀態圖示（drafting/submitted/published）  | ⭐⭐       | 📋   |
+| **Agents Bundle**        | 9 個 SubAgent .agent.md 隨 VSIX 打包          | ⭐⭐⭐⭐⭐ | ✅   |
+| **Auto-Scaffold**        | 偵測缺失 skills/agents/prompts 並自動提示     | ⭐⭐⭐⭐⭐ | ✅   |
+| **macOS Compatibility**  | MCP env PATH 繼承、homebrew Python 支援       | ⭐⭐⭐⭐⭐ | ✅   |
 
 ### 5c.2 Pandoc 整合（雙格式匯出）
 
