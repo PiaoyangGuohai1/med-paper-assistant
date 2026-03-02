@@ -383,3 +383,111 @@ class TestCrossSessionHashPersistence:
         assert data["in_round"] is True
         assert data["artifact_hash_start"] == "persist_test_hash"
         assert "round_start_time" in data
+
+
+# ── _compute_manuscript_hash: multi-file behaviour ─────────────────────
+
+
+class TestComputeManuscriptHashMultiFile:
+    """Test that _compute_manuscript_hash hashes ALL .md files in drafts/."""
+
+    def test_section_file_change_alters_hash(self, project_dir):
+        """Modifying a section file (not manuscript.md) must change the hash."""
+        from med_paper_assistant.interfaces.mcp.tools.review.pipeline_gate import (
+            _compute_manuscript_hash,
+        )
+
+        h1 = _compute_manuscript_hash(project_dir)
+        # Add a section file (simulating patch_draft("introduction.md", ...))
+        intro = project_dir / "drafts" / "introduction.md"
+        intro.write_text("# Introduction\n\nSome intro text.\n", encoding="utf-8")
+        h2 = _compute_manuscript_hash(project_dir)
+        assert h1 != h2, "Hash must change when a new section file is added"
+
+    def test_modifying_section_file_changes_hash(self, project_dir):
+        """Editing an existing section file must change the hash."""
+        from med_paper_assistant.interfaces.mcp.tools.review.pipeline_gate import (
+            _compute_manuscript_hash,
+        )
+
+        intro = project_dir / "drafts" / "introduction.md"
+        intro.write_text("# Introduction v1\n", encoding="utf-8")
+        h1 = _compute_manuscript_hash(project_dir)
+        intro.write_text("# Introduction v2 — revised\n", encoding="utf-8")
+        h2 = _compute_manuscript_hash(project_dir)
+        assert h1 != h2
+
+    def test_hash_deterministic_across_calls(self, project_dir):
+        """Hash is deterministic (sorted filenames)."""
+        from med_paper_assistant.interfaces.mcp.tools.review.pipeline_gate import (
+            _compute_manuscript_hash,
+        )
+
+        (project_dir / "drafts" / "methods.md").write_text("Methods", encoding="utf-8")
+        (project_dir / "drafts" / "results.md").write_text("Results", encoding="utf-8")
+        h1 = _compute_manuscript_hash(project_dir)
+        h2 = _compute_manuscript_hash(project_dir)
+        assert h1 == h2
+
+    def test_empty_drafts_dir_returns_empty(self, tmp_path):
+        """Empty drafts/ dir should return empty string."""
+        from med_paper_assistant.interfaces.mcp.tools.review.pipeline_gate import (
+            _compute_manuscript_hash,
+        )
+
+        (tmp_path / "drafts").mkdir()
+        h = _compute_manuscript_hash(tmp_path)
+        assert h == ""
+
+
+# ── get_status key: latest_weighted_score ──────────────────────────────
+
+
+class TestGetStatusKey:
+    """Verify get_status() returns 'latest_weighted_score' key (alias)."""
+
+    def test_latest_weighted_score_key_exists(self, audit_dir):
+        config = AuditLoopConfig(context="review", min_rounds=1)
+        loop = AutonomousAuditLoop(str(audit_dir), config=config)
+        loop.start_round(artifact_hash="k1")
+        loop.complete_round({"text_quality": 8}, artifact_hash="k2")
+        status = loop.get_status()
+        assert "latest_weighted_score" in status
+        assert status["latest_weighted_score"] == status["latest_score"]
+        assert status["latest_weighted_score"] is not None
+
+
+# ── AutonomousAuditLoop.reset() ────────────────────────────────────────
+
+
+class TestAuditLoopReset:
+    """Test reset clears all state and deletes the JSON file."""
+
+    def test_reset_clears_state(self, audit_dir):
+        config = AuditLoopConfig(context="review", min_rounds=1)
+        loop = AutonomousAuditLoop(str(audit_dir), config=config)
+        loop.start_round(artifact_hash="r1")
+        loop.complete_round({"text_quality": 7}, artifact_hash="r2")
+        loop.save()
+
+        # Verify state file exists
+        state_file = audit_dir / "audit-loop-review.json"
+        assert state_file.is_file()
+
+        loop.reset()
+        assert loop._in_round is False
+        assert loop._current_round == 0
+        assert loop._rounds == []
+        assert not state_file.is_file(), "State file should be deleted after reset"
+
+    def test_reset_allows_fresh_start(self, audit_dir):
+        config = AuditLoopConfig(context="review", min_rounds=1)
+        loop = AutonomousAuditLoop(str(audit_dir), config=config)
+        loop.start_round(artifact_hash="old")
+        loop.complete_round({"text_quality": 5}, artifact_hash="old2")
+
+        loop.reset()
+
+        # Should be able to start a new round after reset
+        ctx = loop.start_round(artifact_hash="fresh")
+        assert ctx["round"] == 1

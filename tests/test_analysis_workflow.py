@@ -2,8 +2,11 @@ import os
 
 import numpy as np
 import pandas as pd
+import pytest
 
-from med_paper_assistant.infrastructure.services.analyzer import Analyzer
+pytest.importorskip("matplotlib", reason="matplotlib not installed")
+
+from med_paper_assistant.infrastructure.services.analyzer import Analyzer  # noqa: E402
 
 
 def test_analysis_workflow(tmp_path):

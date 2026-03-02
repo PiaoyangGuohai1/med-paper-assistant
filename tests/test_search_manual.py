@@ -1,7 +1,10 @@
 import pytest
-from pubmed_search import LiteratureSearcher
 
 pytestmark = pytest.mark.integration
+
+LiteratureSearcher = pytest.importorskip(
+    "pubmed_search", reason="pubmed_search not installed"
+).LiteratureSearcher
 
 
 async def test_search():

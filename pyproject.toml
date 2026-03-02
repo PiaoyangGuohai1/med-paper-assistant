@@ -22,6 +22,7 @@ dependencies = [
     "structlog>=25.5.0",
     "scipy>=1.17.0",
     "pypandoc>=1.16.2",
+    "citeproc-py>=0.6.0",
 ]
 
 # ============================================
@@ -44,7 +45,6 @@ analysis = [
 ]
 # 學術出版工具鏈（CSL 引用 + Pandoc 匯出）
 publishing = [
-    "citeproc-py>=0.6.0",
     "pypandoc>=1.13",
     "lxml>=4.9.0",
 ]

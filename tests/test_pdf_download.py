@@ -10,7 +10,10 @@ import os
 import tempfile
 
 import pytest
-from pubmed_search import LiteratureSearcher
+
+LiteratureSearcher = pytest.importorskip(
+    "pubmed_search", reason="pubmed_search not installed"
+).LiteratureSearcher
 
 # Setup logging
 logging.basicConfig(

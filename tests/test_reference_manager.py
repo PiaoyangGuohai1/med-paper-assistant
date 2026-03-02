@@ -1,9 +1,15 @@
+# ruff: noqa: E402
 import os
 
 import pytest
-from pubmed_search import LiteratureSearcher
 
-from med_paper_assistant.infrastructure.persistence.reference_manager import ReferenceManager
+LiteratureSearcher = pytest.importorskip(
+    "pubmed_search", reason="pubmed_search not installed"
+).LiteratureSearcher
+
+from med_paper_assistant.infrastructure.persistence.reference_manager import (
+    ReferenceManager,
+)
 
 pytestmark = pytest.mark.integration
 

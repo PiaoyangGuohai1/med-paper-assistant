@@ -6,9 +6,12 @@ Tests new features: ESummary, ESpell, EGQuery, ECitMatch, ELink variants, EInfo,
 import time
 
 import pytest
-from pubmed_search import LiteratureSearcher
 
 pytestmark = pytest.mark.integration
+
+LiteratureSearcher = pytest.importorskip(
+    "pubmed_search", reason="pubmed_search not installed"
+).LiteratureSearcher
 
 
 @pytest.fixture

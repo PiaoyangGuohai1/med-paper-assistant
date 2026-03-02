@@ -1,8 +1,11 @@
 import os
 
+import pytest
 from docx import Document
 
-from med_paper_assistant.infrastructure.services.exporter import WordExporter
+pytest.importorskip("matplotlib", reason="matplotlib not installed")
+
+from med_paper_assistant.infrastructure.services.exporter import WordExporter  # noqa: E402
 
 
 def test_export(tmp_path):

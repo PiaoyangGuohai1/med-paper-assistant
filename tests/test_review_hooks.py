@@ -358,6 +358,96 @@ class TestR3EquatorCompliance:
         assert result.passed  # WARNING, not CRITICAL
         assert result.warning_count >= 1
 
+    # ── Multi-format parsing tests (防止 agent free-typing 格式導致 R3 FAIL)
+
+    def test_pipe_table_format_passes(self, engine, project_dir):
+        """Agent commonly produces EQUATOR checklists as Markdown pipe tables."""
+        content = textwrap.dedent("""\
+            # TRIPOD+AI Compliance: 85%
+
+            | # | Item | Section | Status | Notes |
+            |---|------|---------|--------|-------|
+            | 1 | Title identifies prediction model | Title | REPORTED | |
+            | 2 | Structured summary | Abstract | REPORTED | |
+            | 3a | Background | Introduction | REPORTED | |
+            | 4a | Source of data | Methods | REPORTED | |
+            | 4b | Data collection dates | Methods | PARTIAL | Missing end |
+            | 10d | Missing data handling | Methods | NOT REPORTED | Add |
+            | 15a | Performance metrics | Results | REPORTED | |
+        """)
+        _write_equator_compliance(project_dir, 1, content)
+        result = engine.check_equator_compliance(1)
+        assert result.passed
+        assert result.stats["checklist_items"] >= 7
+
+    def test_emoji_status_format_passes(self, engine, project_dir):
+        content = textwrap.dedent("""\
+            # STROBE Checklist
+
+            ✅ Title and abstract
+            ✅ Introduction: Background/rationale
+            ✅ Methods: Study design
+            ✅ Results: Main results
+            ✅ Discussion: Key results
+            ❌ Funding: Not reported
+        """)
+        _write_equator_compliance(project_dir, 1, content)
+        result = engine.check_equator_compliance(1)
+        assert result.passed
+        assert result.stats["checklist_items"] >= 5
+
+    def test_bold_numbered_format_passes(self, engine, project_dir):
+        content = textwrap.dedent("""\
+            # CONSORT Checklist
+
+            **1.** Title — Identification as RCT
+            **2.** Abstract — Structured summary
+            **3a.** Background — Scientific rationale
+            **4.** Design — Trial design description
+            **5.** Eligibility — Participant inclusion criteria
+        """)
+        _write_equator_compliance(project_dir, 1, content)
+        result = engine.check_equator_compliance(1)
+        assert result.passed
+        assert result.stats["checklist_items"] >= 5
+
+    def test_plain_dash_format_passes(self, engine, project_dir):
+        content = textwrap.dedent("""\
+            # STROBE Checklist
+
+            - Title and abstract: Reported on page 1
+            - Introduction: Background stated
+            - Methods: Study design described
+            - Results: Main results presented
+            - Discussion: Key results discussed
+            - Funding: Sources reported
+        """)
+        _write_equator_compliance(project_dir, 1, content)
+        result = engine.check_equator_compliance(1)
+        assert result.passed
+        assert result.stats["checklist_items"] >= 5
+
+    def test_mixed_format_passes(self, engine, project_dir):
+        """Agent might mix checkboxes and table in same file."""
+        content = textwrap.dedent("""\
+            # CONSORT Checklist
+
+            ## Title and Abstract
+            - [x] 1a. Identification as RCT
+            - [x] 1b. Structured abstract
+
+            ## Methods
+            | Item | Description | Status |
+            |------|-------------|--------|
+            | 3a | Trial design | Reported |
+            | 3b | Changes | Reported |
+            | 4a | Eligibility | Reported |
+        """)
+        _write_equator_compliance(project_dir, 1, content)
+        result = engine.check_equator_compliance(1)
+        assert result.passed
+        assert result.stats["checklist_items"] >= 5
+
 
 # ── R4: Review-Fix Traceability ───────────────────────────────────────
 
@@ -530,8 +620,16 @@ class TestRunAll:
 
     def test_run_all_returns_all_hooks(self, engine, project_dir):
         # Create all needed files for round 1
-        _write_review_report(project_dir, 1, "# Review\n" + "methodology domain statistic writing\n" * 40 + "major: 2\nminor: 1\n")
-        _write_author_response(project_dir, 1, "# Response\nACCEPT — Changed method. Reference [[x2024_12345678]].\nACCEPT — Updated.\n")
+        _write_review_report(
+            project_dir,
+            1,
+            "# Review\n" + "methodology domain statistic writing\n" * 40 + "major: 2\nminor: 1\n",
+        )
+        _write_author_response(
+            project_dir,
+            1,
+            "# Response\nACCEPT — Changed method. Reference [[x2024_12345678]].\nACCEPT — Updated.\n",
+        )
         _write_equator_compliance(project_dir, 1, "\n".join(f"- [x] Item {i}" for i in range(7)))
 
         ms = project_dir / "drafts" / "manuscript.md"
