@@ -116,6 +116,8 @@ function registerMcpServerProvider(context: vscode.ExtensionContext): vscode.Dis
             // Build environment: inherit PATH/HOME/SHELL so child processes find uv/uvx/git on macOS
             const mcpEnv: Record<string, string> = {
                 PYTHONPATH: pythonPathEnv,
+                // Tell MCP server to use the user's workspace folder for projects/logs/etc.
+                ...(workspaceFolders ? { MEDPAPER_BASE_DIR: workspaceFolders[0].uri.fsPath } : {}),
                 ...(process.env.PATH ? { PATH: process.env.PATH } : {}),
                 ...(process.env.HOME ? { HOME: process.env.HOME } : {}),
                 ...(process.env.SHELL ? { SHELL: process.env.SHELL } : {}),

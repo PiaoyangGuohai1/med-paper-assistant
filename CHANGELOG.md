@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.3] - 2026-03-02
+
+### Fixed
+
+- **Critical**: MCP server now uses `MEDPAPER_BASE_DIR` env var (set by VSX extension to workspace folder) instead of CWD for `projects/` and `logs/` paths — fixes end-user issue where output went to extension install directory instead of workspace
+
 ## [0.4.2] - 2026-03-02
 
 ### Fixed

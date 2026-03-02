@@ -10,6 +10,7 @@ Manages separate workspaces for different research papers, each with its own:
 """
 
 import json
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -59,13 +60,16 @@ class ProjectManager:
     # Temporary project for exploration
     TEMP_PROJECT_SLUG = "temp-exploration"
 
-    def __init__(self, base_path: str = "."):
+    def __init__(self, base_path: str | None = None):
         """
         Initialize ProjectManager.
 
         Args:
             base_path: Base directory for the med-paper-assistant workspace.
+                       Falls back to MEDPAPER_BASE_DIR env var, then CWD.
         """
+        if base_path is None:
+            base_path = os.environ.get("MEDPAPER_BASE_DIR", ".")
         self.base_path = Path(base_path).resolve()
         self.projects_dir = self.base_path / "projects"
         self.state_file = self.base_path / self.STATE_FILE

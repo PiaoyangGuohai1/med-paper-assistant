@@ -37,8 +37,9 @@ def _get_project_log_dir() -> Path:
             log_dir.mkdir(exist_ok=True)
             return log_dir
 
-    # Fallback: 使用當前工作目錄
-    log_dir = Path.cwd() / "logs"
+    # Fallback: 使用 MEDPAPER_BASE_DIR 環境變數或當前工作目錄
+    base = Path(os.environ.get("MEDPAPER_BASE_DIR", Path.cwd()))
+    log_dir = base / "logs"
     log_dir.mkdir(exist_ok=True)
     return log_dir
 
