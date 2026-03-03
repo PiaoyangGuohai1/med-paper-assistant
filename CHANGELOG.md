@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Humanizer Anti-AI Enhancement**:
+  - `ANTI_AI_PHRASES`: 76 → 133 phrases across 12 semantic categories (overly_formal, unnecessary_hedging, ai_conclusions, filler_boosters, generic_linking, hollow_emphasis, ai_structuring, inflated_academic, ai_discourse, passive_deflectors, nominalised_verbs, hollow_intensifiers)
+  - `AI_TRANSITION_WORDS`: 25 → 33 (added: Nevertheless, Conversely, Correspondingly, Notably, Importantly, Significantly, Fundamentally, Substantially)
+  - 4 new A3b structural pattern checks: #6 negative parallelism, #7 copula avoidance, #8 em dash overuse, #9 false ranges (X to Y)
+  - 12 new tests for anti-AI detection (826 Python tests total)
+- **VS Code Copilot Lifecycle Hooks**:
+  - 7 hook scripts: `session-init.sh`, `prompt-analyzer.sh`, `pre-tool-guard.sh`, `post-tool-check.sh`, `pre-compact-save.sh`, `subagent-init.sh`, `session-stop.sh`
+  - `.github/hooks/mdpaper-lifecycle.json` configuration
+  - Design doc: `docs/design/copilot-lifecycle-hooks.md`
+  - State communication via `.github/hooks/_state/` (gitignored)
+  - Graceful degradation when jq is not installed
+
+### Fixed
+
+- **MCP Instructions**: Removed ghost tool `save_diagram_standalone` (merged into `save_diagram`), added missing `insert_figure`/`insert_table`/`list_assets` to DATA ANALYSIS section, updated DIAGRAM WORKFLOW
+- **Tool count drift**: 85 → 86 tools (review/ 21 → 22), synced across 5 files via `sync_repo_counts.py --fix`
+
 ## [0.4.6] - 2026-03-02
 
 ### Added

@@ -121,12 +121,14 @@ TOOL_GUIDE = """## TOOL SELECTION GUIDE (46 tools)
 | `run_statistical_test` | Run t-test, correlation, etc. |
 | `create_plot` | Create visualizations |
 | `generate_table_one` | Generate baseline characteristics table |
+| `insert_figure` | Insert a figure reference into draft |
+| `insert_table` | Insert a table reference into draft |
+| `list_assets` | List all figures/tables in project |
 
 ### 🎨 DIAGRAM TOOLS (with Draw.io MCP)
 | Tool | When to use |
 |------|-------------|
-| `save_diagram` | Save diagram to project's results/figures |
-| `save_diagram_standalone` | Save diagram without project |
+| `save_diagram` | Save diagram to project's results/figures (works with or without project) |
 | `list_diagrams` | List diagrams in project |
 
 **DIAGRAM WORKFLOW (with Draw.io MCP):**
@@ -135,7 +137,8 @@ TOOL_GUIDE = """## TOOL SELECTION GUIDE (46 tools)
 3. User edits in browser → Says "存檔" or "save"
 4. Call `drawio.get_diagram_content()` → Get XML
 5. Call `mdpaper.save_diagram(project="xxx", content=...)` → Save to project
-6. If no project → Use `save_diagram_standalone()` or ask user to create project
+6. If no project → `save_diagram(output_dir="...")` or ask user to create project
+7. Optionally call `insert_figure()` to register figure in draft
 
 ### 📄 WORD EXPORT (workflow)
 1. `list_templates` → Available templates
@@ -162,6 +165,9 @@ TOOL_GUIDE = """## TOOL SELECTION GUIDE (46 tools)
 - "ready to write, have references" → `convert_exploration_to_project` → `create_project`
 - "write/draft" → **`validate_concept` first!** → `write_draft`
 - "analyze data" → `analyze_dataset`
+- "insert figure" → `insert_figure` (after saving to project)
+- "insert table" → `insert_table` (after generating with `generate_table_one`)
+- "list figures/tables" → `list_assets`
 - "create diagram" → **Confirm project first** → `drawio.create_diagram()`
 - "save diagram" → `drawio.get_diagram_content()` → `save_diagram(project=...)`
 - "export to Word" → Use export workflow

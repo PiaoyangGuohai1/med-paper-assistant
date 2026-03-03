@@ -30,7 +30,7 @@ This is a **monorepo toolkit** that bundles everything a medical researcher need
 
 | Component                                                          | Type                   | Tools  | Description                                                                       |
 | ------------------------------------------------------------------ | ---------------------- | ------ | --------------------------------------------------------------------------------- |
-| **[mdpaper](#-mdpaper-mcp-tools)**                                 | Core MCP Server        | 85     | Paper writing: projects, references, drafts, analysis, validation, review, export |
+| **[mdpaper](#-mdpaper-mcp-tools)**                                 | Core MCP Server        | 86     | Paper writing: projects, references, drafts, analysis, validation, review, export |
 | **[pubmed-search](https://github.com/u9401066/pubmed-search-mcp)** | MCP Server (submodule) | 37     | PubMed/Europe PMC/CORE search, PICO, citation metrics, session mgmt               |
 | **[CGU](https://github.com/u9401066/creativity-generation-unit)**  | MCP Server (submodule) | 13     | Creative generation: brainstorm, deep think, spark collision                      |
 | **[VS Code Extension](vscode-extension/)**                         | Extension              | 3 cmds | MCP server lifecycle, `@mdpaper` chat participant                                 |
@@ -55,8 +55,8 @@ flowchart LR
         Dash[Dashboard]
     end
 
-    subgraph MCP["MCP Servers (~135 tools)"]
-        mdpaper["mdpaper<br/>85 tools<br/>Draft · Export · Validate · Review"]
+    subgraph MCP["MCP Servers (~136 tools)"]
+        mdpaper["mdpaper<br/>86 tools<br/>Draft · Export · Validate · Review"]
         pubmed["pubmed-search<br/>37 tools<br/>Search · Metrics"]
         cgu["CGU<br/>13 tools<br/>Deep Think · Ideas"]
     end
@@ -91,7 +91,7 @@ flowchart LR
 | Traditional Tools                   | Medical Paper Assistant                |
 | ----------------------------------- | -------------------------------------- |
 | Fixed templates, rigid workflow     | Flexible, exploratory approach         |
-| Separate apps for search/write/cite | All-in-one: ~135 tools in VS Code      |
+| Separate apps for search/write/cite | All-in-one: ~136 tools in VS Code      |
 | Manual reference management         | Auto-save with verified PubMed data    |
 | Export then format                  | Direct Word export with journal styles |
 | Learn complex UI                    | Natural language conversation          |
@@ -264,7 +264,7 @@ projects/{slug}/
         ▼                  ▼                  ▼                  ▼
 ┌───────────────┐  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐
 │ 📝 mdpaper    │  │🔍 pubmed-     │  │💡 cgu         │  │🔌 External    │
-│  85 tools     │  │  search       │  │  13 tools     │  │   MCPs (uvx)  │
+│  86 tools     │  │  search       │  │  13 tools     │  │   MCPs (uvx)  │
 │               │  │  37 tools     │  │               │  │               │
 │ • projects    │  │ • PubMed      │  │ • brainstorm  │  │ 🎨 drawio     │
 │ • references  │  │ • Europe PMC  │  │ • deep_think  │  │ • diagrams    │
@@ -370,7 +370,7 @@ Write, edit, cite — with built-in validation.
 | `insert_table`         | Insert table into draft with archive validation       |
 | `list_assets`          | List figures and tables in project results            |
 
-### 🔍 Review & Audit (21 tools)
+### 🔍 Review & Audit (22 tools)
 
 | Category               | Key Tools                                                                 |
 | ---------------------- | ------------------------------------------------------------------------- |
@@ -483,7 +483,7 @@ med-paper-assistant/
 │   ├── domain/                    #   Business logic, entities, value objects
 │   ├── application/               #   Use cases, services
 │   ├── infrastructure/            #   DAL, external services
-│   └── interfaces/mcp/            #   MCP server, 85 tools in 7 groups
+│   └── interfaces/mcp/            #   MCP server, 86 tools in 7 groups
 │
 ├── integrations/                  # Bundled MCP servers
 │   ├── pubmed-search-mcp/         #   PubMed/PMC/CORE search (37 tools)
@@ -518,7 +518,7 @@ med-paper-assistant/
 
 | Status | Feature                     | Description                                            |
 | ------ | --------------------------- | ------------------------------------------------------ |
-| ✅     | **3 MCP Servers**           | mdpaper (85) + pubmed-search (37) + CGU (13)           |
+| ✅     | **3 MCP Servers**           | mdpaper (86) + pubmed-search (37) + CGU (13)           |
 | ✅     | **Foam Integration**        | Wikilinks, hover preview, backlinks, project isolation |
 | ✅     | **Project Memory**          | `.memory/` for cross-session AI context                |
 | ✅     | **Table 1 Generator**       | Auto-generate baseline characteristics                 |

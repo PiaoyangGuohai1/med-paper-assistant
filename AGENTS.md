@@ -178,6 +178,22 @@ uv 優先。`pyproject.toml` + `uv.lock`。禁止全域安裝。詳見 `.github/
 已上線：`start_exploration` `convert_exploration_to_project`（`get_exploration_status` 已合併至 `get_current_project(include_files=true)`）
 未實作：`list_staged_artifacts` `tag_artifact` `link_artifact_to_project`
 
+### VS Code Copilot Lifecycle Hooks
+
+7 個 hook 腳本（`.github/hooks/mdpaper-lifecycle.json`）。設計文件：`docs/design/copilot-lifecycle-hooks.md`。
+
+| Event            | 腳本                | 功能                                   |
+| ---------------- | ------------------- | -------------------------------------- |
+| SessionStart     | session-init.sh     | 載入模式/recovery/pending evolutions   |
+| UserPromptSubmit | prompt-analyzer.sh  | 意圖偵測（mode-switch/commit/writing） |
+| PreToolUse       | pre-tool-guard.sh   | 模式保護 + 破壞性指令攔截              |
+| PostToolUse      | post-tool-check.sh  | Hook 提醒（draft→writing hooks 等）    |
+| PreCompact       | pre-compact-save.sh | Context 壓縮前 checkpoint              |
+| SubagentStart    | subagent-init.sh    | 注入專案/模式至 subagent               |
+| Stop             | session-stop.sh     | 審計 + 清理 + memory sync 提醒         |
+
+腳本位於 `scripts/hooks/copilot/`。依賴 jq（腳本無 jq 時 graceful degradation）。
+
 ---
 
 ## Memory 同步

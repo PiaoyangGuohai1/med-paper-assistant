@@ -9,7 +9,7 @@
 
 <p align="center">
   <b>🔬 醫學論文寫作的整合式 AI 工具包</b><br>
-  <i>3 個 MCP Server · ~135 個工具 · 26 個技能 · 15 個 Prompt 工作流 — 全在 VS Code 裡</i>
+  <i>3 個 MCP Server · ~136 個工具 · 26 個技能 · 15 個 Prompt 工作流 — 全在 VS Code 裡</i>
 </p>
 
 > 📖 [English Version](README.md)
@@ -24,7 +24,7 @@
 
 | 元件                                                               | 類型                 | 工具數 | 說明                                                      |
 | ------------------------------------------------------------------ | -------------------- | ------ | --------------------------------------------------------- |
-| **[mdpaper](#-mdpaper-mcp-工具)**                                  | 核心 MCP Server      | 85     | 論文寫作：專案、文獻、草稿、分析、驗證、審查、匯出        |
+| **[mdpaper](#-mdpaper-mcp-工具)**                                  | 核心 MCP Server      | 86     | 論文寫作：專案、文獻、草稿、分析、驗證、審查、匯出        |
 | **[pubmed-search](https://github.com/u9401066/pubmed-search-mcp)** | MCP Server（子模組） | 37     | PubMed/Europe PMC/CORE 搜尋、PICO、引用指標、session 管理 |
 | **[CGU](https://github.com/u9401066/creativity-generation-unit)**  | MCP Server（子模組） | 13     | 創意發想：腦力激盪、深度思考、火花碰撞                    |
 | **[VS Code Extension](vscode-extension/)**                         | 擴充功能             | 3 指令 | MCP Server 生命週期、`@mdpaper` 聊天參與者                |
@@ -49,8 +49,8 @@ flowchart LR
         Dash[Dashboard]
     end
 
-    subgraph MCP["MCP Server（~135 工具）"]
-        mdpaper["mdpaper<br/>85 工具<br/>草稿 · 匯出 · 驗證 · 審查"]
+    subgraph MCP["MCP Server（~136 工具）"]
+        mdpaper["mdpaper<br/>86 工具<br/>草稿 · 匯出 · 驗證 · 審查"]
         pubmed["pubmed-search<br/>37 工具<br/>搜尋 · 指標"]
         cgu["CGU<br/>13 工具<br/>深度思考 · 創意"]
     end
@@ -85,7 +85,7 @@ flowchart LR
 | 傳統工具                   | Medical Paper Assistant          |
 | -------------------------- | -------------------------------- |
 | 固定模板、僵化流程         | 彈性、探索式方法                 |
-| 搜尋/寫作/引用分開多個 App | 一站式：~135 個工具在 VS Code 裡 |
+| 搜尋/寫作/引用分開多個 App | 一站式：~136 個工具在 VS Code 裡 |
 | 手動管理參考文獻           | 自動儲存 + PubMed 驗證資料       |
 | 匯出後再排版               | 直接匯出符合期刊格式的 Word      |
 | 學習複雜介面               | 自然語言對話                     |
@@ -258,7 +258,7 @@ projects/{slug}/
         ▼                  ▼                  ▼                  ▼
 ┌───────────────┐  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐
 │ 📝 mdpaper    │  │🔍 pubmed-     │  │💡 cgu         │  │🔌 外部 MCPs   │
-│  85 工具      │  │  search       │  │  13 工具      │  │   (uvx)       │
+│  86 工具      │  │  search       │  │  13 工具      │  │   (uvx)       │
 │               │  │  37 工具      │  │               │  │               │
 │ • 專案管理    │  │ • PubMed      │  │ • 腦力激盪    │  │ 🎨 drawio     │
 │ • 參考文獻    │  │ • Europe PMC  │  │ • 深度思考    │  │ • 流程圖      │
@@ -363,7 +363,7 @@ pubmed-search: GET /api/cached_article/24891204
 | `insert_table`         | 插入表格至草稿，含歸檔驗證    |
 | `list_assets`          | 列出專案 results 中的圖表資源 |
 
-### 🔍 審查與審計（21 工具）
+### 🔍 審查與審計（22 工具）
 
 | 分類              | 關鍵工具                                                                  |
 | ----------------- | ------------------------------------------------------------------------- |
@@ -476,7 +476,7 @@ med-paper-assistant/
 │   ├── domain/                    #   業務邏輯、實體、值物件
 │   ├── application/               #   用例、服務
 │   ├── infrastructure/            #   DAL、外部服務
-│   └── interfaces/mcp/            #   MCP Server，85 工具分 7 大類
+│   └── interfaces/mcp/            #   MCP Server，86 工具分 7 大類
 │
 ├── integrations/                  # 內建 MCP Server
 │   ├── pubmed-search-mcp/         #   PubMed/PMC/CORE 搜尋（37 工具）
@@ -511,7 +511,7 @@ med-paper-assistant/
 
 | 狀態 | 功能                        | 說明                                                |
 | ---- | --------------------------- | --------------------------------------------------- |
-| ✅   | **3 個 MCP Server**         | mdpaper (85) + pubmed-search (37) + CGU (13)        |
+| ✅   | **3 個 MCP Server**         | mdpaper (86) + pubmed-search (37) + CGU (13)        |
 | ✅   | **Foam 整合**               | Wikilinks、懸停預覽、反向連結、專案隔離             |
 | ✅   | **Project Memory**          | `.memory/` 跨 session AI 記憶                       |
 | ✅   | **Table 1 生成器**          | 自動生成基線特徵表                                  |

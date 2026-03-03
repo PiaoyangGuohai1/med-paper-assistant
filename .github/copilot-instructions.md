@@ -65,7 +65,7 @@ Pipeline 定義「何時」、Skill 定義「如何」、Hook 定義「品質」
 **Code-Enforced** = `run_writing_hooks` / `run_review_hooks` / `run_meta_learning` 內有確定性程式碼邏輯。
 **Agent-Driven** = 僅靠 Agent 閱讀 SKILL.md 並自行執行，無程式碼強制。
 
-## MCP Server（85 tools, 2026-02-28）
+## MCP Server（86 tools, 2026-03-03）
 
 | 模組        | 工具數 | 重點                                                                       |
 | ----------- | ------ | -------------------------------------------------------------------------- |
@@ -73,9 +73,23 @@ Pipeline 定義「何時」、Skill 定義「如何」、Hook 定義「品質」
 | reference/  | 12     | save_reference_mcp 優先 + subagent analysis                                |
 | draft/      | 13     | writing + citation + editing (patch_draft)                                 |
 | validation/ | 3      | validate_concept + wikilinks                                               |
-| analysis/   | 9      | table_one + stats + figures                                                |
-| review/     | 21     | formatting + pipeline + audit + review-hooks + meta-learning + flexibility |
+| analysis/   | 9      | table_one + stats + figures（含 insert_figure/insert_table/list_assets）   |
+| review/     | 22     | formatting + pipeline + audit + review-hooks + meta-learning + flexibility |
 | export/     | 10     | word + pandoc (docx/pdf/bib)                                               |
+
+## VS Code Copilot Lifecycle Hooks
+
+7 個 hook 腳本（`.github/hooks/mdpaper-lifecycle.json`）。設計文件：`docs/design/copilot-lifecycle-hooks.md`。
+
+| Event            | 腳本                | 功能                                   |
+| ---------------- | ------------------- | -------------------------------------- |
+| SessionStart     | session-init.sh     | 載入模式/recovery/pending evolutions   |
+| UserPromptSubmit | prompt-analyzer.sh  | 意圖偵測（mode-switch/commit/writing） |
+| PreToolUse       | pre-tool-guard.sh   | 模式保護 + 破壞性指令攔截              |
+| PostToolUse      | post-tool-check.sh  | Hook 提醒（draft→writing hooks 等）    |
+| PreCompact       | pre-compact-save.sh | Context 壓縮前 checkpoint              |
+| SubagentStart    | subagent-init.sh    | 注入專案/模式至 subagent               |
+| Stop             | session-stop.sh     | 審計 + 清理 + memory sync 提醒         |
 
 ## 回應風格
 

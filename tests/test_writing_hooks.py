@@ -696,8 +696,111 @@ class TestHookA3:
     def test_anti_ai_list_populated(self):
         assert len(ANTI_AI_PHRASES) >= 20
 
+    def test_filler_phrase_detected(self, engine: WritingHooksEngine):
+        text = "In order to understand the results, due to the fact that the data was limited."
+        r = engine.check_anti_ai_patterns(text)
+        assert r.stats["total_matches"] >= 1
+
+    def test_chatbot_artifact_detected(self, engine: WritingHooksEngine):
+        text = "The results were significant. I hope this helps with your understanding."
+        r = engine.check_anti_ai_patterns(text)
+        assert r.stats["total_matches"] >= 1
+
+    def test_generic_conclusion_detected(self, engine: WritingHooksEngine):
+        text = "The future looks bright for this therapy. Exciting times lie ahead."
+        r = engine.check_anti_ai_patterns(text)
+        assert r.stats["total_matches"] >= 2
+
+    def test_copula_avoidance_phrase_detected(self, engine: WritingHooksEngine):
+        text = "This method serves as a foundation. The result stands as a benchmark."
+        r = engine.check_anti_ai_patterns(text)
+        assert r.stats["total_matches"] >= 2
+
+    def test_significance_inflation_detected(self, engine: WritingHooksEngine):
+        text = "This left an indelible mark on the field and its evolving landscape."
+        r = engine.check_anti_ai_patterns(text)
+        assert r.stats["total_matches"] >= 2
+
 
 # ──────────────────────────────────────────────────────────────────────────────
+# Hook A3b: Structural AI Writing Signals (new checks 6-9)
+# ──────────────────────────────────────────────────────────────────────────────
+
+
+class TestHookA3bExtended:
+    """Tests for the new humanizer-based structural checks added to A3b."""
+
+    def _make_long_text(self, base: str, repeat: int = 30) -> str:
+        """Create text long enough to pass the 200-char minimum."""
+        return (base + " ") * repeat
+
+    def test_negative_parallelism_warning(self, engine: WritingHooksEngine):
+        text = self._make_long_text(
+            "This approach is not just effective, it's revolutionary. "
+            "The method is not only fast, but also accurate. "
+            "The drug is not merely safe, but transformative. "
+            "Results show improvement."
+        )
+        r = engine.check_ai_writing_signals(text)
+        assert r.stats["neg_parallelism_count"] >= 3
+        assert any("parallelism" in i.message.lower() for i in r.issues)
+
+    def test_negative_parallelism_low_count_ok(self, engine: WritingHooksEngine):
+        # 1 instance should not trigger warning (threshold is >2)
+        filler = " ".join(["The patient showed rapid recovery."] * 25)
+        text = "This approach is not just effective, it's also efficient. " + filler
+        r = engine.check_ai_writing_signals(text)
+        assert not any("parallelism" in i.message.lower() for i in r.issues)
+
+    def test_copula_avoidance_warning(self, engine: WritingHooksEngine):
+        text = self._make_long_text(
+            "The hospital serves as a referral center. "
+            "This drug functions as an antagonist. "
+            "The protocol stands as a model. "
+            "ECMO acts as life support."
+        )
+        r = engine.check_ai_writing_signals(text)
+        assert r.stats["copula_avoidance_count"] >= 4
+        assert any("copula" in i.message.lower() for i in r.issues)
+
+    def test_em_dash_overuse_warning(self, engine: WritingHooksEngine):
+        text = self._make_long_text(
+            "The drug — a novel compound — showed efficacy. "
+            "Patients — both young and old — responded well. "
+            "The protocol — designed carefully — reduced errors. "
+        )
+        r = engine.check_ai_writing_signals(text)
+        assert r.stats["em_dash_count"] >= 6
+
+    def test_em_dash_normal_ok(self, engine: WritingHooksEngine):
+        filler = " ".join(["Patients recovered quickly."] * 25)
+        text = (
+            "The results were significant. "
+            "One notable finding — the rapid onset — was unexpected. " + filler
+        )
+        r = engine.check_ai_writing_signals(text)
+        assert not any("em dash" in i.message.lower() for i in r.issues)
+
+    def test_false_range_warning(self, engine: WritingHooksEngine):
+        text = self._make_long_text(
+            "The impact ranges from clinical to administrative. "
+            "From surgery to rehabilitation, care must be holistic. "
+            "Outcomes vary from excellent to poor. "
+            "Benefits span from cost savings to quality improvement. "
+            "Issues range from staffing to equipment. "
+        )
+        r = engine.check_ai_writing_signals(text)
+        assert r.stats["false_range_count"] >= 5
+
+    def test_stats_contain_new_fields(self, engine: WritingHooksEngine):
+        text = self._make_long_text("Normal academic text with varied sentences.")
+        r = engine.check_ai_writing_signals(text)
+        assert "neg_parallelism_count" in r.stats
+        assert "copula_avoidance_count" in r.stats
+        assert "em_dash_count" in r.stats
+        assert "false_range_count" in r.stats
+
+
 # Hook A4: Wikilink Format Validation
 # ──────────────────────────────────────────────────────────────────────────────
 

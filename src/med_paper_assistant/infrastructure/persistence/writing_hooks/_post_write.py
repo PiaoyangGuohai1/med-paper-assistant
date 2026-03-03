@@ -8,6 +8,10 @@ from typing import Any
 import structlog
 
 from ._constants import (
+    AI_COPULA_AVOIDANCE_VERBS,
+    AI_EM_DASH_PATTERN,
+    AI_FALSE_RANGE_PATTERN,
+    AI_NEGATIVE_PARALLELISM_PATTERNS,
     AI_TRANSITION_WORDS,
     AMER_VS_BRIT,
     ANTI_AI_PARAGRAPH_START_ONLY,
@@ -356,6 +360,79 @@ class PostWriteHooksMixin:
                         )
                     )
 
+        # ── 6. Negative parallelism overuse (Pattern 9) ──
+        neg_parallel_count = 0
+        for pat in AI_NEGATIVE_PARALLELISM_PATTERNS:
+            neg_parallel_count += len(re.findall(pat, prose, re.IGNORECASE))
+        if neg_parallel_count > 2:
+            issues.append(
+                HookIssue(
+                    hook_id="A3b",
+                    severity="WARNING",
+                    section=section,
+                    message=f"Negative parallelism overuse ({neg_parallel_count} instances of "
+                    "'not just X, it's Y' / 'not only...but...'). AI text frequently "
+                    "uses this rhetorical device.",
+                    suggestion="Rephrase to direct statements instead of 'not just/only' "
+                    "constructions.",
+                )
+            )
+
+        # ── 7. Copula avoidance (Pattern 8) ──
+        copula_count = 0
+        copula_found: dict[str, int] = {}
+        for verb in AI_COPULA_AVOIDANCE_VERBS:
+            cnt = len(re.findall(rf"\b{re.escape(verb)}\b", prose, re.IGNORECASE))
+            if cnt > 0:
+                copula_count += cnt
+                copula_found[verb] = cnt
+        if copula_count > 3:
+            issues.append(
+                HookIssue(
+                    hook_id="A3b",
+                    severity="WARNING",
+                    section=section,
+                    message=f"Copula avoidance detected ({copula_count} instances: "
+                    f"{', '.join(f'{v} ({c}x)' for v, c in copula_found.items())}). "
+                    "AI avoids 'is/has' by substituting grandiose verbs.",
+                    suggestion="Consider simpler alternatives: 'is', 'has', 'means'.",
+                )
+            )
+
+        # ── 8. Em dash overuse (Pattern 13) ──
+        em_dash_count = len(re.findall(AI_EM_DASH_PATTERN, prose))
+        word_count_for_density = len(prose.split())
+        em_dash_per_500w = (
+            (em_dash_count / word_count_for_density * 500) if word_count_for_density > 0 else 0
+        )
+        if em_dash_count > 3 and em_dash_per_500w > 3:
+            issues.append(
+                HookIssue(
+                    hook_id="A3b",
+                    severity="WARNING",
+                    section=section,
+                    message=f"Em dash overuse ({em_dash_count} em dashes, "
+                    f"{em_dash_per_500w:.1f} per 500 words). "
+                    "AI overuses em dashes for parenthetical asides.",
+                    suggestion="Use commas, parentheses, or restructure sentences. "
+                    "Reserve em dashes for emphasis.",
+                )
+            )
+
+        # ── 9. False range patterns (Pattern 12) ──
+        false_ranges = re.findall(AI_FALSE_RANGE_PATTERN, prose, re.IGNORECASE)
+        if len(false_ranges) > 4:
+            issues.append(
+                HookIssue(
+                    hook_id="A3b",
+                    severity="WARNING",
+                    section=section,
+                    message=f"Excessive 'from X to Y' range patterns ({len(false_ranges)} instances). "
+                    "AI text overuses vague range enumerations.",
+                    suggestion="Be specific with numbers or quantities instead of vague ranges.",
+                )
+            )
+
         # ── Composite score ──
         ai_signal_count = len(issues)
         passed = ai_signal_count == 0
@@ -374,6 +451,10 @@ class PostWriteHooksMixin:
             "transition_word_counts": dict(
                 sorted(transition_used.items(), key=lambda x: -x[1])[:10]
             ),
+            "neg_parallelism_count": neg_parallel_count,
+            "copula_avoidance_count": copula_count,
+            "em_dash_count": em_dash_count,
+            "false_range_count": len(false_ranges),
         }
         logger.info(
             "Hook A3b complete",

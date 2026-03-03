@@ -1,5 +1,34 @@
 # Decision Log
 
+## [2026-03-03] Humanizer Anti-AI 強化 + VS Code Copilot Lifecycle Hooks + 圖表插入修正
+
+### 背景
+
+1. Anti-AI 偵測需要更全面的短語庫和結構分析，以應對 LLM 生成文本的典型模式
+2. VS Code Copilot 缺乏 lifecycle hook 機制來自動化模式保護、品質提醒等操作
+3. MCP instructions.py 中存在幽靈工具 `save_diagram_standalone` 和缺漏的 figure/table 插入工具
+
+### 決定
+
+1. **Anti-AI 擴展策略**：ANTI_AI_PHRASES 76→133，按 12 個語義類別組織（overly_formal, unnecessary_hedging, ai_conclusions 等）。新增 4 個 A3b 結構檢查（negative parallelism, copula avoidance, em dash, false ranges）
+2. **Hook 架構選擇**：使用 VS Code Copilot Lifecycle Hooks（`.github/hooks/`），7 個 bash 腳本 + JSON 配置。stdin/stdout JSON 通訊，依賴 jq 但無 jq 時 graceful exit 0
+3. **圖表插入修正**：移除 `save_diagram_standalone`（已合併進 `save_diagram` 的 `output_dir` 參數），補齊 `insert_figure`/`insert_table`/`list_assets` 到 instructions
+
+### 關鍵技術決定
+
+| 問題                    | 選項                                  | 決定            | 理由                                                        |
+| ----------------------- | ------------------------------------- | --------------- | ----------------------------------------------------------- |
+| Hook 實作方式           | A. VS Code API / B. Shell scripts     | **B. Shell**    | Copilot Hooks 原生支援 shell，無需 extension 改動           |
+| jq 缺失處理             | A. 報錯退出 / B. Graceful degradation | **B. Graceful** | exit 0 = allow all，不阻塞正常工作流                        |
+| save_diagram_standalone | A. 保留文檔 / B. 移除                 | **B. 移除**     | 工具不存在，save_diagram 已處理 project/standalone 兩種情境 |
+| Anti-AI 短語組織        | A. 一個大 list / B. 分類別            | **B. 分類別**   | 12 類更易維護，可單獨啟用/停用                              |
+
+### 成果
+
+- 826 Python tests passed, 106 vitest passed
+- 22 個過時工具計數透過 `sync_repo_counts.py --fix` 自動修復
+- 7 個 Copilot hook 腳本 + 設計文件就緒
+
 ## [2026-03-02] v0.4.0 Bug Fixes + macOS Compatibility
 
 ### 背景

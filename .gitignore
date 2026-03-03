@@ -61,3 +61,6 @@ test_foam_refs/
 # Pandoc binaries (install via system package manager)
 pandoc.exe
 pandoc-*.msi
+
+# Copilot hooks runtime state (ephemeral, per-session)
+.github/hooks/_state/
