@@ -6,7 +6,7 @@
 
 ## 當前焦點 (2026-03-02)
 
-v0.4.0 Bug Report 全部修復 + VSX macOS/Insiders 相容性修復完成。
+v0.4.6 released — VSX zero-config marketplace mode + testability refactor。
 
 ### 當前狀態
 
@@ -19,7 +19,7 @@ v0.4.0 Bug Report 全部修復 + VSX macOS/Insiders 相容性修復完成。
 | Agents                 | **9**                                                                                       |
 | Infrastructure classes | **8** core                                                                                  |
 | Python unit tests      | **730 passed** (excl. external-dep tests)                                                   |
-| VSX vitest             | **35 passed**                                                                               |
+| VSX vitest             | **106 passed** (4 test files)                                                               |
 | Ruff errors            | **0**                                                                                       |
 
 ### 三層演進架構實作狀態
@@ -30,16 +30,15 @@ v0.4.0 Bug Report 全部修復 + VSX macOS/Insiders 相容性修復完成。
 | L2 Code-Level Enforcement    | ✅ 完整                | 5 元件全部上線                                       |
 | L3 Autonomous Self-Evolution | ⚠️ Phase C 完成        | Git post-commit / EvolutionVerifier / Auto-PR 未實作 |
 
-### 最近變更 (v0.4.0 Bug Fixes + macOS)
+### 最近變更 (v0.4.6 Zero-Config Marketplace)
 
-- **Bug 1**: `_compute_manuscript_hash()` 改為 hash 所有 `drafts/*.md`（修復 review deadlock）
-- **Bug 2**: `citeproc-py` 改為 try/except lazy import + `_CITEPROC_AVAILABLE` flag
-- **Bug 3**: `start_document_session` 的 `template_name` 改為可選，空值建立空白文件
-- **Bug 4**: Hook A1 加入 `_strip_frontmatter()`、A6 排除統計標記假陽性
-- **Bug 5**: export_pdf 連鎖修復（同 Bug 2 保護鏈）
-- **macOS 相容性**: MCP env 繼承 PATH/HOME/SHELL/LANG，支援 homebrew 版本化 Python（python3.12）
-- **VSX 完整性**: agents/ 新增 9 個 .agent.md、autoScaffoldIfNeeded()、build/validate 腳本更新
-- **VSX bundle**: 所有 Python source 與 bundled 同步確認
+- **uvManager.ts**: 跨平台 uv 自動偵測 + headless 安裝（Windows PowerShell / Unix curl）
+- **extensionHelpers.ts**: 6 個純函數從 extension.ts 抽取（shouldSkipMcpRegistration, isDevWorkspace, isMedPaperProject, determinePythonPath, countMissingBundledItems, buildDevPythonPath）
+- **Marketplace mode**: `uvx med-paper-assistant`（完全隔離，無 PYTHONPATH 污染）
+- **ensureUvReady()**: 啟動時自動安裝 uv，VS Code progress notification
+- **mcp.json skip fix**: 同時檢查 server name + module path，避免誤跳過
+- **getPythonPath fix**: 只對 med-paper-assistant pyproject.toml 返回 'uv'
+- **Tests**: 52 → 106 vitest（extensionHelpers 30, packaging 21, uvManager 20, extension 35）
 
 ### 已知問題
 
@@ -48,9 +47,10 @@ v0.4.0 Bug Report 全部修復 + VSX macOS/Insiders 相容性修復完成。
 
 ## 下一步
 
-- [ ] Git commit + marketplace publish
+- [ ] Phase 5c TreeView/CodeLens/Diagnostics features
+- [ ] Dashboard Webview 內嵌（取代 Simple Browser）
+- [ ] CI/CD pipeline for automated VSIX publish
 - [ ] Run actual project pipeline to generate evolution data
-- [ ] Dashboard integration for evolution reports
 - [ ] Consider grammar checker (language-tool-python as A7)
 
 2026-03-02

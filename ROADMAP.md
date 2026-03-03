@@ -391,18 +391,20 @@ EMPTY → EXPLORATION → PROJECT
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-| 功能                     | 說明                                          | 優先級     | 狀態 |
-| ------------------------ | --------------------------------------------- | ---------- | ---- |
-| **TreeView: Projects**   | 側邊欄顯示專案清單、狀態、進度                | ⭐⭐⭐⭐⭐ | 📋   |
-| **TreeView: References** | 當前專案的文獻樹，點擊開啟 note               | ⭐⭐⭐⭐   | 📋   |
-| **CodeLens: Novelty**    | concept.md 上方顯示最近驗證分數               | ⭐⭐⭐     | 📋   |
-| **CodeLens: Citations**  | [[wikilink]] 上方顯示 "Author (Year)"         | ⭐⭐⭐⭐   | 📋   |
-| **Diagnostics**          | 引用缺失警告、wikilink 斷鏈、字數超限         | ⭐⭐⭐⭐   | 📋   |
-| **Webview Dashboard**    | 內嵌 Next.js Dashboard（取代 Simple Browser） | ⭐⭐⭐     | 📋   |
-| **File Decorations**     | 專案狀態圖示（drafting/submitted/published）  | ⭐⭐       | 📋   |
-| **Agents Bundle**        | 9 個 SubAgent .agent.md 隨 VSIX 打包          | ⭐⭐⭐⭐⭐ | ✅   |
-| **Auto-Scaffold**        | 偵測缺失 skills/agents/prompts 並自動提示     | ⭐⭐⭐⭐⭐ | ✅   |
-| **macOS Compatibility**  | MCP env PATH 繼承、homebrew Python 支援       | ⭐⭐⭐⭐⭐ | ✅   |
+| 功能                        | 說明                                          | 優先級     | 狀態 |
+| --------------------------- | --------------------------------------------- | ---------- | ---- |
+| **TreeView: Projects**      | 側邊欄顯示專案清單、狀態、進度                | ⭐⭐⭐⭐⭐ | 📋   |
+| **TreeView: References**    | 當前專案的文獻樹，點擊開啟 note               | ⭐⭐⭐⭐   | 📋   |
+| **CodeLens: Novelty**       | concept.md 上方顯示最近驗證分數               | ⭐⭐⭐     | 📋   |
+| **CodeLens: Citations**     | [[wikilink]] 上方顯示 "Author (Year)"         | ⭐⭐⭐⭐   | 📋   |
+| **Diagnostics**             | 引用缺失警告、wikilink 斷鏈、字數超限         | ⭐⭐⭐⭐   | 📋   |
+| **Webview Dashboard**       | 內嵌 Next.js Dashboard（取代 Simple Browser） | ⭐⭐⭐     | 📋   |
+| **File Decorations**        | 專案狀態圖示（drafting/submitted/published）  | ⭐⭐       | 📋   |
+| **Agents Bundle**           | 9 個 SubAgent .agent.md 隨 VSIX 打包          | ⭐⭐⭐⭐⭐ | ✅   |
+| **Auto-Scaffold**           | 偵測缺失 skills/agents/prompts 並自動提示     | ⭐⭐⭐⭐⭐ | ✅   |
+| **macOS Compatibility**     | MCP env PATH 繼承、homebrew Python 支援       | ⭐⭐⭐⭐⭐ | ✅   |
+| **Zero-Config Marketplace** | uv 自動安裝 + `uvx` 隔離模式，一鍵安裝即用    | ⭐⭐⭐⭐⭐ | ✅   |
+| **Testability Refactor**    | 純函數抽取 + 106 vitest（4 test files）       | ⭐⭐⭐⭐   | ✅   |
 
 ### 5c.2 Pandoc 整合（雙格式匯出）
 

@@ -2,14 +2,20 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import { getPythonArgs, loadSkillsAsInstructions, loadSkillContent, BUNDLED_SKILLS, BUNDLED_PROMPTS, BUNDLED_TEMPLATES, BUNDLED_AGENTS } from './utils';
+import { findUvPath, installUvHeadless, getUvxPath, buildUvxCommand, buildMcpEnv } from './uvManager';
+import { shouldSkipMcpRegistration, isDevWorkspace as checkIsDevWorkspace, determinePythonPath, countMissingBundledItems, buildDevPythonPath } from './extensionHelpers';
 
 let outputChannel: vscode.OutputChannel;
+let resolvedUvPath: string | null = null;
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
     outputChannel = vscode.window.createOutputChannel('MedPaper Assistant');
     outputChannel.appendLine('MedPaper Assistant is activating...');
 
-    // Register MCP Server Definition Provider
+    // Step 1: Ensure uv is installed (needed for MCP server)
+    await ensureUvReady(context);
+
+    // Step 2: Register MCP Server Definition Provider
     const mcpProvider = registerMcpServerProvider(context);
     context.subscriptions.push(mcpProvider);
 
@@ -69,15 +75,88 @@ export function activate(context: vscode.ExtensionContext) {
     outputChannel.appendLine('MedPaper Assistant activated successfully!');
 }
 
+/**
+ * Ensure uv is installed. If not, offer to auto-install.
+ * Stores the resolved uv path in module-level variable and globalState.
+ */
+async function ensureUvReady(context: vscode.ExtensionContext): Promise<void> {
+    const log = (msg: string) => outputChannel.appendLine(`[uv] ${msg}`);
+
+    log('Checking uv installation...');
+    resolvedUvPath = await findUvPath(log);
+
+    if (resolvedUvPath) {
+        log(`uv is ready: ${resolvedUvPath}`);
+        context.globalState.update('uvPath', resolvedUvPath);
+        return;
+    }
+
+    // uv not found — offer auto-install
+    log('uv not found, prompting user...');
+    const choice = await vscode.window.showInformationMessage(
+        'MedPaper Assistant 需要 "uv" (Python 套件管理器) 才能運行。要自動安裝嗎？\n安裝後會自動處理 Python 和所有相依套件。',
+        '自動安裝 uv',
+        '手動安裝',
+        '取消'
+    );
+
+    if (choice === '自動安裝 uv') {
+        resolvedUvPath = await vscode.window.withProgress(
+            {
+                location: vscode.ProgressLocation.Notification,
+                title: 'MedPaper: 正在安裝 uv...',
+                cancellable: false
+            },
+            async (progress) => {
+                progress.report({ message: '下載並安裝 uv (Python 套件管理器)...' });
+                const installed = await installUvHeadless(log);
+
+                if (installed) {
+                    progress.report({ message: '安裝完成！' });
+                    context.globalState.update('uvPath', installed);
+
+                    const reload = await vscode.window.showInformationMessage(
+                        '✅ uv 安裝成功！請重新載入 VS Code 以完成設定。',
+                        '重新載入'
+                    );
+                    if (reload === '重新載入') {
+                        vscode.commands.executeCommand('workbench.action.reloadWindow');
+                    }
+                } else {
+                    vscode.window.showErrorMessage(
+                        'uv 安裝失敗。請手動安裝: https://docs.astral.sh/uv/',
+                        '開啟安裝頁面'
+                    ).then(c => {
+                        if (c === '開啟安裝頁面') {
+                            vscode.env.openExternal(vscode.Uri.parse('https://docs.astral.sh/uv/getting-started/installation/'));
+                        }
+                    });
+                }
+                return installed;
+            }
+        );
+    } else if (choice === '手動安裝') {
+        vscode.env.openExternal(vscode.Uri.parse('https://docs.astral.sh/uv/getting-started/installation/'));
+    }
+    // choice === '取消' → resolvedUvPath stays null
+}
+
 function registerMcpServerProvider(context: vscode.ExtensionContext): vscode.Disposable {
-    // Check if user has their own mcp.json - if so, skip auto-registration
+    // Check if user has their own mcp.json WITH mdpaper already defined
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (workspaceFolders) {
         const mcpJsonPath = path.join(workspaceFolders[0].uri.fsPath, '.vscode', 'mcp.json');
         if (fs.existsSync(mcpJsonPath)) {
-            outputChannel.appendLine('[MCP] Found .vscode/mcp.json - skipping auto-registration (use local config instead)');
-            // Return a no-op disposable
-            return { dispose: () => {} };
+            try {
+                const content = fs.readFileSync(mcpJsonPath, 'utf-8');
+                if (shouldSkipMcpRegistration(content)) {
+                    outputChannel.appendLine('[MCP] Found mdpaper in .vscode/mcp.json - skipping auto-registration');
+                    return { dispose: () => {} };
+                }
+                outputChannel.appendLine('[MCP] Found .vscode/mcp.json but no mdpaper defined - proceeding with auto-registration');
+            } catch {
+                outputChannel.appendLine('[MCP] Could not read .vscode/mcp.json - proceeding with auto-registration');
+            }
         }
     }
 
@@ -88,64 +167,80 @@ function registerMcpServerProvider(context: vscode.ExtensionContext): vscode.Dis
         onDidChangeMcpServerDefinitions: new vscode.EventEmitter<void>().event,
 
         provideMcpServerDefinitions(token: vscode.CancellationToken): vscode.ProviderResult<vscode.McpServerDefinition[]> {
-            const pythonPath = getPythonPath(context);
             const workspaceFolders = vscode.workspace.workspaceFolders;
+            const wsRoot = workspaceFolders?.[0]?.uri.fsPath;
 
-            outputChannel.appendLine(`[MCP] Using Python Path: ${pythonPath}`);
+            // Detect development workspace (has src/med_paper_assistant/ source code)
+            const isDevWorkspace = wsRoot ? checkIsDevWorkspace(wsRoot) : false;
 
-            // Determine PYTHONPATH
-            // Include bundled tools and workspace src (for development)
-            let pythonPathEnv = path.join(context.extensionPath, 'bundled', 'tool');
-            if (workspaceFolders) {
-                const srcPath = path.join(workspaceFolders[0].uri.fsPath, 'src');
-                const integrationsPath = path.join(workspaceFolders[0].uri.fsPath, 'integrations');
+            // Use stored uv path, or fallback
+            const uvPath = resolvedUvPath || (context.globalState.get<string>('uvPath')) || 'uv';
+            const uvxPath = getUvxPath(uvPath);
 
-                if (fs.existsSync(srcPath)) {
-                    pythonPathEnv = `${srcPath}${path.delimiter}${pythonPathEnv}`;
-                }
-
-                // Add integration src paths for development
-                const cguSrc = path.join(integrationsPath, 'cgu', 'src');
-                if (fs.existsSync(cguSrc)) {
-                    pythonPathEnv = `${cguSrc}${path.delimiter}${pythonPathEnv}`;
-                }
-            }
+            outputChannel.appendLine(`[MCP] Mode: ${isDevWorkspace ? 'development' : 'marketplace'}, uv: ${uvPath}, uvx: ${uvxPath}`);
 
             const definitions: vscode.McpServerDefinition[] = [];
 
-            // Build environment: inherit PATH/HOME/SHELL so child processes find uv/uvx/git on macOS
-            const mcpEnv: Record<string, string> = {
-                PYTHONPATH: pythonPathEnv,
-                // Tell MCP server to use the user's workspace folder for projects/logs/etc.
-                ...(workspaceFolders ? { MEDPAPER_BASE_DIR: workspaceFolders[0].uri.fsPath } : {}),
-                ...(process.env.PATH ? { PATH: process.env.PATH } : {}),
-                ...(process.env.HOME ? { HOME: process.env.HOME } : {}),
-                ...(process.env.SHELL ? { SHELL: process.env.SHELL } : {}),
-                ...(process.env.LANG ? { LANG: process.env.LANG } : {}),
-                ...(process.env.USERPROFILE ? { USERPROFILE: process.env.USERPROFILE } : {}),
-            };
+            // --- 1. MedPaper Assistant ---
+            let mdpaperCommand: string;
+            let mdpaperArgs: string[];
+            let mcpEnv: Record<string, string>;
 
-            // 1. MedPaper Assistant
-            const mdpaperArgs = getPythonArgs(pythonPath, 'med_paper_assistant.interfaces.mcp');
-            outputChannel.appendLine(`[MCP] MedPaper Args: ${mdpaperArgs.join(' ')}`);
+            const bundledToolPath = path.join(context.extensionPath, 'bundled', 'tool');
+
+            if (isDevWorkspace && wsRoot) {
+                // Development: use workspace source via uv run
+                const pythonPath = getPythonPath(context);
+                mdpaperCommand = pythonPath;
+                mdpaperArgs = getPythonArgs(pythonPath, 'med_paper_assistant.interfaces.mcp');
+
+                // Dev PYTHONPATH: workspace src + integrations + bundled
+                const pythonPathEnv = buildDevPythonPath(wsRoot, bundledToolPath);
+
+                mcpEnv = buildMcpEnv({ workspaceDir: wsRoot, pythonPath: pythonPathEnv });
+            } else {
+                // Marketplace: use uvx for complete isolation
+                // uvx med-paper-assistant → installs from PyPI, handles Python + all deps
+                // No PYTHONPATH needed — uvx creates its own isolated environment
+                const [cmd, args] = buildUvxCommand(uvPath, 'med-paper-assistant');
+                mdpaperCommand = cmd;
+                mdpaperArgs = args;
+                mcpEnv = buildMcpEnv({ workspaceDir: wsRoot });
+            }
+
+            outputChannel.appendLine(`[MCP] MedPaper: ${mdpaperCommand} ${mdpaperArgs.join(' ')}`);
             definitions.push(new vscode.McpStdioServerDefinition(
                 'MedPaper Assistant',
-                pythonPath,
+                mdpaperCommand,
                 mdpaperArgs,
                 mcpEnv
             ));
 
-            // 2. CGU (only if available in workspace or bundled)
-            const cguBundled = path.join(context.extensionPath, 'bundled', 'tool', 'cgu');
-            const cguInWorkspace = workspaceFolders
-                ? fs.existsSync(path.join(workspaceFolders[0].uri.fsPath, 'integrations', 'cgu', 'src', 'cgu'))
+            // --- 2. CGU ---
+            const hasCguBundled = fs.existsSync(path.join(bundledToolPath, 'cgu'));
+            const cguInWorkspace = wsRoot
+                ? fs.existsSync(path.join(wsRoot, 'integrations', 'cgu', 'src', 'cgu'))
                 : false;
-            if (cguBundled && fs.existsSync(cguBundled) || cguInWorkspace || pythonPath === 'uvx') {
-                const cguArgs = getPythonArgs(pythonPath, 'cgu.server');
-                outputChannel.appendLine(`[MCP] CGU Args: ${cguArgs.join(' ')}`);
+
+            if (hasCguBundled || cguInWorkspace) {
+                let cguCommand: string;
+                let cguArgs: string[];
+
+                if (isDevWorkspace || cguInWorkspace) {
+                    const pythonPath = getPythonPath(context);
+                    cguCommand = pythonPath;
+                    cguArgs = getPythonArgs(pythonPath, 'cgu.server');
+                } else {
+                    // Marketplace: use uvx for CGU too
+                    const [cmd, args] = buildUvxCommand(uvPath, 'creativity-generation-unit');
+                    cguCommand = cmd;
+                    cguArgs = args;
+                }
+
+                outputChannel.appendLine(`[MCP] CGU: ${cguCommand} ${cguArgs.join(' ')}`);
                 definitions.push(new vscode.McpStdioServerDefinition(
                     'CGU Creativity',
-                    pythonPath,
+                    cguCommand,
                     cguArgs,
                     mcpEnv
                 ));
@@ -153,10 +248,10 @@ function registerMcpServerProvider(context: vscode.ExtensionContext): vscode.Dis
                 outputChannel.appendLine('[MCP] CGU not found — skipping registration');
             }
 
-            // 3. Draw.io (only register, will fail gracefully if uvx/drawio-mcp not installed)
+            // --- 3. Draw.io ---
             definitions.push(new vscode.McpStdioServerDefinition(
                 'Draw.io Diagrams',
-                'uvx',
+                uvxPath,
                 ['--from', 'drawio-mcp', 'drawio-mcp-server'],
                 {
                     ...mcpEnv,
@@ -363,55 +458,15 @@ function registerChatParticipant(context: vscode.ExtensionContext): vscode.Dispo
 }
 
 function getPythonPath(context: vscode.ExtensionContext): string {
-    // 1. Check user configuration
     const config = vscode.workspace.getConfiguration('mdpaper');
     const configuredPath = config.get<string>('pythonPath');
-    if (configuredPath) {
-        // If it's just "uv" or "uvx", return it as is
-        if (configuredPath === 'uv' || configuredPath === 'uvx') {
-            return configuredPath;
-        }
-        if (fs.existsSync(configuredPath)) {
-            return configuredPath;
-        }
-    }
+    const wsRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
 
-    // 2. Prefer 'uv' if workspace has pyproject.toml (uv-managed project)
-    const workspaceFolders = vscode.workspace.workspaceFolders;
-    if (workspaceFolders) {
-        const pyprojectPath = path.join(workspaceFolders[0].uri.fsPath, 'pyproject.toml');
-        if (fs.existsSync(pyprojectPath)) {
-            // This is likely a uv-managed project, use 'uv' to ensure proper environment
-            return 'uv';
-        }
-    }
-
-    // 3. Check for virtual environment in workspace (fallback for non-uv projects)
-    if (workspaceFolders) {
-        for (const folder of workspaceFolders) {
-            const venvPaths = [
-                path.join(folder.uri.fsPath, '.venv', 'bin', 'python'),
-                path.join(folder.uri.fsPath, '.venv', 'bin', 'python3'),
-                path.join(folder.uri.fsPath, '.venv', 'Scripts', 'python.exe'),
-                path.join(folder.uri.fsPath, 'venv', 'bin', 'python'),
-                path.join(folder.uri.fsPath, 'venv', 'Scripts', 'python.exe'),
-            ];
-            for (const venvPath of venvPaths) {
-                if (fs.existsSync(venvPath)) {
-                    return venvPath;
-                }
-            }
-        }
-    }
-
-    // 4. Check bundled Python (for standalone distribution)
-    const bundledPython = path.join(context.extensionPath, 'bundled', 'python', 'bin', 'python3');
-    if (fs.existsSync(bundledPython)) {
-        return bundledPython;
-    }
-
-    // 5. Prefer uvx for auto-install from PyPI (one-click experience)
-    return 'uvx';
+    return determinePythonPath({
+        configuredPath: configuredPath || undefined,
+        wsRoot,
+        extensionPath: context.extensionPath,
+    });
 }
 
 
@@ -425,40 +480,8 @@ async function autoScaffoldIfNeeded(context: vscode.ExtensionContext): Promise<v
     const wsRoot = workspaceFolders[0].uri.fsPath;
     const extPath = context.extensionPath;
 
-    // Check if this workspace already has skills set up
-    const skillsDir = path.join(wsRoot, '.claude', 'skills');
-    const agentsDir = path.join(wsRoot, '.github', 'agents');
-    const promptsDir = path.join(wsRoot, '.github', 'prompts');
-
-    // Count what's missing
-    let missingSkills = 0;
-    for (const skill of BUNDLED_SKILLS) {
-        const dst = path.join(skillsDir, skill, 'SKILL.md');
-        const src = path.join(extPath, 'skills', skill, 'SKILL.md');
-        if (fs.existsSync(src) && !fs.existsSync(dst)) {
-            missingSkills++;
-        }
-    }
-
-    let missingAgents = 0;
-    for (const agent of BUNDLED_AGENTS) {
-        const dst = path.join(agentsDir, `${agent}.agent.md`);
-        const src = path.join(extPath, 'agents', `${agent}.agent.md`);
-        if (fs.existsSync(src) && !fs.existsSync(dst)) {
-            missingAgents++;
-        }
-    }
-
-    let missingPrompts = 0;
-    for (const prompt of BUNDLED_PROMPTS) {
-        const dst = path.join(promptsDir, `${prompt}.prompt.md`);
-        const src = path.join(extPath, 'prompts', `${prompt}.prompt.md`);
-        if (fs.existsSync(src) && !fs.existsSync(dst)) {
-            missingPrompts++;
-        }
-    }
-
-    const totalMissing = missingSkills + missingAgents + missingPrompts;
+    const { missingSkills, missingAgents, missingPrompts, total: totalMissing } =
+        countMissingBundledItems(wsRoot, extPath, BUNDLED_SKILLS, BUNDLED_AGENTS, BUNDLED_PROMPTS);
 
     if (totalMissing === 0) {
         outputChannel.appendLine('[AutoScaffold] Workspace already has all skills/agents/prompts.');

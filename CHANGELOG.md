@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.6] - 2026-03-02
+
+### Added
+
+- **VSX Zero-Config Marketplace Mode**:
+  - `uvManager.ts` — cross-platform uv auto-detection + headless installation (Windows PowerShell / Unix curl)
+  - `ensureUvReady()` — auto-install uv on activation with VS Code progress notification
+  - Marketplace mode uses `uvx med-paper-assistant` from PyPI (complete isolation, no PYTHONPATH contamination)
+  - CGU marketplace mode uses `uvx creativity-generation-unit`
+- **VSX Testability Refactor**:
+  - `extensionHelpers.ts` — 6 pure functions extracted from `extension.ts` (no vscode API dependency): `shouldSkipMcpRegistration`, `isDevWorkspace`, `isMedPaperProject`, `determinePythonPath`, `countMissingBundledItems`, `buildDevPythonPath`
+  - `extensionHelpers.test.ts` — 30 tests covering all extracted helpers
+  - `packaging.test.ts` — 21 tests for manifest schema, `.vscodeignore`, module structure, version consistency
+  - `uvManager.test.ts` — 20 tests (expanded from 17) including async `findUvPath` tests
+
+### Fixed
+
+- **Critical**: `shouldSkipMcpRegistration()` now checks both `"mdpaper"` server name AND `med_paper_assistant` module path — prevents skipping when user has unrelated `mcp.json` entries
+- **Critical**: `determinePythonPath()` only returns `'uv'` fallback for `med-paper-assistant` pyproject.toml — prevents wrongly treating any `pyproject.toml` as a valid Python path
+
+### Changed
+
+- VSX vitest: 52 → **106 passed** (+54 new tests across 4 test files)
+- CGU bundled tools updated to latest version
+
+## [0.4.5] - 2026-03-02
+
+### Fixed
+
+- **Critical**: `_strip_references_section()` greedy regex (`.*` with `re.DOTALL`) deleted all content after `## References` — any sections like `## Appendix` or `## Supplementary Materials` were silently lost during export. Fixed to non-greedy `.*?(?=\n## |\Z)` with lookahead.
+- 2 regression tests added for post-References content preservation
+
 ## [0.4.4] - 2026-03-02
 
 ### Added
