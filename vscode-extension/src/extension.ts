@@ -180,6 +180,8 @@ async function ensureMarketplaceToolsReady(context: vscode.ExtensionContext): Pr
 
     const toolSpecs: Array<{ packageName: string; binaryName?: string }> = [
         { packageName: 'med-paper-assistant' },
+        { packageName: 'pubmed-search-mcp' },
+        { packageName: 'zotero-keeper' },
         { packageName: 'drawio-mcp', binaryName: 'drawio-mcp-server' },
     ];
 
