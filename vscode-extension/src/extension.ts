@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import { getPythonArgs, loadSkillsAsInstructions, loadSkillContent, BUNDLED_SKILLS, BUNDLED_PROMPTS, BUNDLED_TEMPLATES, BUNDLED_AGENTS } from './utils';
-import { findUvPath, installUvHeadless, getUvxPath, buildUvxCommand, buildMcpEnv } from './uvManager';
+import { findUvPath, installUvHeadless, getUvxPath, buildUvxCommand, buildMcpCommand, buildMcpEnv } from './uvManager';
 import { shouldSkipMcpRegistration, isDevWorkspace as checkIsDevWorkspace, determinePythonPath, countMissingBundledItems, buildDevPythonPath } from './extensionHelpers';
 
 let outputChannel: vscode.OutputChannel;
@@ -199,13 +199,14 @@ function registerMcpServerProvider(context: vscode.ExtensionContext): vscode.Dis
 
                 mcpEnv = buildMcpEnv({ workspaceDir: wsRoot, pythonPath: pythonPathEnv });
             } else {
-                // Marketplace: use uvx for complete isolation
-                // uvx med-paper-assistant → installs from PyPI, handles Python + all deps
-                // No PYTHONPATH needed — uvx creates its own isolated environment
-                const [cmd, args] = buildUvxCommand(uvPath, 'med-paper-assistant');
+                // Marketplace: prefer pre-installed tool, fallback to uvx
+                const [cmd, args, preInstalled] = buildMcpCommand(uvPath, 'med-paper-assistant');
                 mdpaperCommand = cmd;
                 mdpaperArgs = args;
                 mcpEnv = buildMcpEnv({ workspaceDir: wsRoot });
+                if (preInstalled) {
+                    outputChannel.appendLine(`[MCP] MedPaper: using pre-installed binary (skipping uvx)`);
+                }
             }
 
             outputChannel.appendLine(`[MCP] MedPaper: ${mdpaperCommand} ${mdpaperArgs.join(' ')}`);
@@ -231,10 +232,13 @@ function registerMcpServerProvider(context: vscode.ExtensionContext): vscode.Dis
                     cguCommand = pythonPath;
                     cguArgs = getPythonArgs(pythonPath, 'cgu.server');
                 } else {
-                    // Marketplace: use uvx for CGU too
-                    const [cmd, args] = buildUvxCommand(uvPath, 'creativity-generation-unit');
+                    // Marketplace: prefer pre-installed, fallback to uvx
+                    const [cmd, args, preInstalled] = buildMcpCommand(uvPath, 'creativity-generation-unit');
                     cguCommand = cmd;
                     cguArgs = args;
+                    if (preInstalled) {
+                        outputChannel.appendLine(`[MCP] CGU: using pre-installed binary (skipping uvx)`);
+                    }
                 }
 
                 outputChannel.appendLine(`[MCP] CGU: ${cguCommand} ${cguArgs.join(' ')}`);
@@ -249,15 +253,25 @@ function registerMcpServerProvider(context: vscode.ExtensionContext): vscode.Dis
             }
 
             // --- 3. Draw.io ---
-            definitions.push(new vscode.McpStdioServerDefinition(
-                'Draw.io Diagrams',
-                uvxPath,
-                ['--from', 'drawio-mcp', 'drawio-mcp-server'],
-                {
-                    ...mcpEnv,
-                    DRAWIO_NEXTJS_URL: 'http://localhost:3000'
-                }
-            ));
+            const [drawioCmd, drawioArgs, drawioPreInstalled] = buildMcpCommand(
+                uvPath, 'drawio-mcp', 'drawio-mcp-server'
+            );
+            if (drawioPreInstalled) {
+                outputChannel.appendLine(`[MCP] Draw.io: using pre-installed binary (skipping uvx)`);
+                definitions.push(new vscode.McpStdioServerDefinition(
+                    'Draw.io Diagrams',
+                    drawioCmd,
+                    [],
+                    { ...mcpEnv, DRAWIO_NEXTJS_URL: 'http://localhost:3000' }
+                ));
+            } else {
+                definitions.push(new vscode.McpStdioServerDefinition(
+                    'Draw.io Diagrams',
+                    uvxPath,
+                    ['--from', 'drawio-mcp', 'drawio-mcp-server'],
+                    { ...mcpEnv, DRAWIO_NEXTJS_URL: 'http://localhost:3000' }
+                ));
+            }
 
             return definitions;
         },

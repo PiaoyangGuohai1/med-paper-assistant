@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getUvSearchPaths, getUvxPath, getUvInstallCommand, buildUvxCommand, buildMcpEnv, findUvPath, enrichPath } from '../uvManager';
+import { getUvSearchPaths, getUvxPath, getUvInstallCommand, buildUvxCommand, buildMcpCommand, buildMcpEnv, findUvPath, enrichPath, findInstalledTool } from '../uvManager';
 
 // ──────────────────────────────────────────────────────────
 // getUvSearchPaths
@@ -92,6 +92,76 @@ describe('buildUvxCommand', () => {
     it('works with CGU package name', () => {
         const [cmd, args] = buildUvxCommand('uv', 'creativity-generation-unit');
         expect(args).toEqual(['creativity-generation-unit']);
+    });
+});
+
+// ──────────────────────────────────────────────────────────
+// findInstalledTool
+// ──────────────────────────────────────────────────────────
+
+describe('findInstalledTool', () => {
+    it('returns null for a non-existent tool', () => {
+        const result = findInstalledTool('definitely-nonexistent-tool-xyz-12345');
+        expect(result).toBeNull();
+    });
+
+    it('returns string path when tool binary exists', () => {
+        // 'uv' should be installed on this system (test prerequisite)
+        const result = findInstalledTool('uv');
+        if (result !== null) {
+            expect(typeof result).toBe('string');
+            expect(result).toContain('uv');
+        }
+        // If null, uv is only in PATH but not in a known fixed location — that's OK
+    });
+
+    it('returns an absolute path', () => {
+        const result = findInstalledTool('uv');
+        if (result !== null) {
+            expect(result.startsWith('/')).toBe(true);
+        }
+    });
+});
+
+// ──────────────────────────────────────────────────────────
+// buildMcpCommand
+// ──────────────────────────────────────────────────────────
+
+describe('buildMcpCommand', () => {
+    it('falls back to uvx when tool is not pre-installed', () => {
+        const [cmd, args, preInstalled] = buildMcpCommand('uv', 'definitely-nonexistent-pkg-xyz');
+        expect(preInstalled).toBe(false);
+        expect(cmd).toBe('uvx');
+        expect(args).toEqual(['definitely-nonexistent-pkg-xyz']);
+    });
+
+    it('uses pre-installed binary when available', () => {
+        // If uv is installed via uv tool install / pip, it should be found
+        const [cmd, args, preInstalled] = buildMcpCommand('uv', 'uv');
+        if (preInstalled) {
+            expect(args).toEqual([]);
+            expect(cmd).toContain('uv');
+        } else {
+            // uv not in a fixed location — uvx fallback
+            expect(cmd).toBe('uvx');
+        }
+    });
+
+    it('supports custom binaryName different from packageName', () => {
+        const [cmd, args, preInstalled] = buildMcpCommand('uv', 'drawio-mcp', 'drawio-mcp-server');
+        if (!preInstalled) {
+            // Falls back to uvx with the packageName
+            expect(cmd).toBe('uvx');
+            expect(args).toEqual(['drawio-mcp']);
+        }
+    });
+
+    it('returns [command, args, boolean] tuple', () => {
+        const result = buildMcpCommand('uv', 'some-package');
+        expect(result).toHaveLength(3);
+        expect(typeof result[0]).toBe('string');
+        expect(Array.isArray(result[1])).toBe(true);
+        expect(typeof result[2]).toBe('boolean');
     });
 });
 

@@ -186,6 +186,77 @@ export async function installUvHeadless(log?: (msg: string) => void): Promise<st
 }
 
 /**
+ * Find a pre-installed tool binary in known locations.
+ * Checks uv tool directories, Homebrew, and common install paths.
+ *
+ * This avoids re-downloading via uvx when the tool is already persistently
+ * installed (via `uv tool install`, `pip install --user`, `brew install`, etc.).
+ *
+ * @param binaryName - The command name to look for (e.g., 'med-paper-assistant')
+ * @returns Absolute path to the binary, or null if not found
+ */
+export function findInstalledTool(binaryName: string): string | null {
+    const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+    const ext = process.platform === 'win32' ? '.exe' : '';
+    const bin = binaryName + ext;
+
+    const candidates: string[] = [];
+
+    if (process.platform === 'win32') {
+        candidates.push(
+            path.join(homeDir, '.local', 'bin', bin),
+            path.join(process.env.LOCALAPPDATA || '', 'uv', 'bin', bin),
+            path.join(homeDir, 'AppData', 'Local', 'uv', 'bin', bin),
+        );
+    } else {
+        candidates.push(
+            path.join(homeDir, '.local', 'bin', bin),       // uv tool install / pip --user
+            path.join(homeDir, '.cargo', 'bin', bin),        // cargo install
+            '/usr/local/bin/' + bin,                         // Homebrew Intel / manual
+        );
+        if (process.platform === 'darwin') {
+            candidates.push('/opt/homebrew/bin/' + bin);     // Homebrew Apple Silicon
+        }
+    }
+
+    for (const c of candidates) {
+        if (c && fs.existsSync(c)) {
+            return c;
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Build MCP server command preferring pre-installed tool over uvx.
+ *
+ * Resolution order:
+ * 1. Pre-installed binary (uv tool install / pip --user / brew) → direct execution
+ * 2. uvx (ephemeral environment) → downloads if not cached
+ *
+ * @param uvPath - Path to the uv binary (for uvx fallback)
+ * @param packageName - PyPI package name (e.g., 'med-paper-assistant')
+ * @param binaryName - Binary/command name (defaults to packageName)
+ * @param pythonVersion - Optional Python version constraint
+ * @returns [command, args, isPreInstalled] tuple
+ */
+export function buildMcpCommand(
+    uvPath: string,
+    packageName: string,
+    binaryName?: string,
+    pythonVersion?: string,
+): [string, string[], boolean] {
+    const bin = binaryName || packageName;
+    const installed = findInstalledTool(bin);
+    if (installed) {
+        return [installed, [], true];
+    }
+    const [cmd, args] = buildUvxCommand(uvPath, packageName, pythonVersion);
+    return [cmd, args, false];
+}
+
+/**
  * Build the MCP server command and args for marketplace mode.
  * Uses uvx for complete isolation — no PYTHONPATH needed.
  *
