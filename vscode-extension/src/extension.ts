@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import { getPythonArgs, loadSkillsAsInstructions, loadSkillContent, BUNDLED_SKILLS, BUNDLED_PROMPTS, BUNDLED_TEMPLATES, BUNDLED_AGENTS } from './utils';
-import { findUvPath, installUvHeadless, getUvxPath, buildUvxCommand, buildMcpCommand, buildMcpEnv } from './uvManager';
+import { findUvPath, installUvHeadless, getUvxPath, buildUvxCommand, buildMcpCommand, buildMcpEnv, ensureInstalledTool } from './uvManager';
 import { shouldSkipMcpRegistration, isDevWorkspace as checkIsDevWorkspace, determinePythonPath, countMissingBundledItems, buildDevPythonPath } from './extensionHelpers';
 
 let outputChannel: vscode.OutputChannel;
@@ -14,6 +14,9 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // Step 1: Ensure uv is installed (needed for MCP server)
     await ensureUvReady(context);
+
+    // Step 1.5: Marketplace mode auto-installs required persistent tool binaries.
+    await ensureMarketplaceToolsReady(context);
 
     // Step 2: Register MCP Server Definition Provider
     const mcpProvider = registerMcpServerProvider(context);
@@ -141,6 +144,71 @@ async function ensureUvReady(context: vscode.ExtensionContext): Promise<void> {
     // choice === '取消' → resolvedUvPath stays null
 }
 
+async function ensureMarketplaceToolsReady(context: vscode.ExtensionContext): Promise<void> {
+    if (!resolvedUvPath) {
+        outputChannel.appendLine('[Install] Skipping tool auto-install because uv is not ready.');
+        return;
+    }
+
+    const wsRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+    const isDevWorkspace = wsRoot ? checkIsDevWorkspace(wsRoot) : false;
+    if (isDevWorkspace) {
+        outputChannel.appendLine('[Install] Development workspace detected - skipping marketplace tool auto-install.');
+        return;
+    }
+
+    if (wsRoot) {
+        const mcpJsonPath = path.join(wsRoot, '.vscode', 'mcp.json');
+        if (fs.existsSync(mcpJsonPath)) {
+            try {
+                const content = fs.readFileSync(mcpJsonPath, 'utf-8');
+                if (shouldSkipMcpRegistration(content)) {
+                    outputChannel.appendLine('[Install] User-managed mcp.json detected - skipping marketplace tool auto-install.');
+                    return;
+                }
+            } catch {
+                outputChannel.appendLine('[Install] Could not inspect .vscode/mcp.json - continuing with marketplace tool checks.');
+            }
+        }
+    }
+
+    const bundledToolPath = path.join(context.extensionPath, 'bundled', 'tool');
+    const hasCguBundled = fs.existsSync(path.join(bundledToolPath, 'cgu'));
+    const cguInWorkspace = wsRoot
+        ? fs.existsSync(path.join(wsRoot, 'integrations', 'cgu', 'src', 'cgu'))
+        : false;
+
+    const toolSpecs: Array<{ packageName: string; binaryName?: string }> = [
+        { packageName: 'med-paper-assistant' },
+        { packageName: 'drawio-mcp', binaryName: 'drawio-mcp-server' },
+    ];
+
+    if (hasCguBundled || cguInWorkspace) {
+        toolSpecs.push({ packageName: 'creativity-generation-unit', binaryName: 'cgu-server' });
+    }
+
+    const log = (msg: string) => outputChannel.appendLine(`[Install] ${msg}`);
+
+    await vscode.window.withProgress(
+        {
+            location: vscode.ProgressLocation.Notification,
+            title: 'MedPaper: 正在檢查並安裝 MCP 相依套件...',
+            cancellable: false,
+        },
+        async (progress) => {
+            const total = toolSpecs.length;
+            for (let i = 0; i < total; i++) {
+                const spec = toolSpecs[i];
+                progress.report({
+                    message: `檢查 ${spec.binaryName || spec.packageName} (${i + 1}/${total})`,
+                    increment: 100 / total,
+                });
+                await ensureInstalledTool(spec.packageName, spec.binaryName, undefined, log);
+            }
+        }
+    );
+}
+
 function registerMcpServerProvider(context: vscode.ExtensionContext): vscode.Disposable {
     // Check if user has their own mcp.json WITH mdpaper already defined
     const workspaceFolders = vscode.workspace.workspaceFolders;
@@ -233,7 +301,7 @@ function registerMcpServerProvider(context: vscode.ExtensionContext): vscode.Dis
                     cguArgs = getPythonArgs(pythonPath, 'cgu.server');
                 } else {
                     // Marketplace: prefer pre-installed, fallback to uvx
-                    const [cmd, args, preInstalled] = buildMcpCommand(uvPath, 'creativity-generation-unit');
+                    const [cmd, args, preInstalled] = buildMcpCommand(uvPath, 'creativity-generation-unit', 'cgu-server');
                     cguCommand = cmd;
                     cguArgs = args;
                     if (preInstalled) {

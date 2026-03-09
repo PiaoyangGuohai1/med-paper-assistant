@@ -62,6 +62,24 @@ export function enrichPath(basePath: string): string {
 }
 
 /**
+ * Get all PATH directories after enrichment, preserving order and removing duplicates.
+ */
+function getPathDirectories(basePath: string): string[] {
+    const seen = new Set<string>();
+    const dirs: string[] = [];
+
+    for (const dir of enrichPath(basePath).split(path.delimiter)) {
+        if (!dir || seen.has(dir)) {
+            continue;
+        }
+        seen.add(dir);
+        dirs.push(dir);
+    }
+
+    return dirs;
+}
+
+/**
  * Get potential uv binary paths based on platform.
  * Covers PATH, common install locations, and platform-specific paths.
  */
@@ -200,7 +218,8 @@ export function findInstalledTool(binaryName: string): string | null {
     const ext = process.platform === 'win32' ? '.exe' : '';
     const bin = binaryName + ext;
 
-    const candidates: string[] = [];
+    const candidates: string[] = getPathDirectories(process.env.PATH || '')
+        .map(dir => path.join(dir, bin));
 
     if (process.platform === 'win32') {
         candidates.push(
@@ -226,6 +245,87 @@ export function findInstalledTool(binaryName: string): string | null {
     }
 
     return null;
+}
+
+/**
+ * Build the install command for a persistent uv tool installation.
+ *
+ * @param packageName - PyPI package name
+ * @param binaryName - Tool binary to install from the package
+ * @param pythonVersion - Optional Python version constraint
+ * @returns Command string runnable by exec
+ */
+export function getUvToolInstallCommand(
+    packageName: string,
+    binaryName?: string,
+    pythonVersion?: string,
+): string {
+    const args = ['tool', 'install'];
+
+    if (pythonVersion) {
+        args.push('--python', pythonVersion);
+    }
+
+    if (binaryName && binaryName !== packageName) {
+        args.push('--from', packageName, binaryName);
+    } else {
+        args.push(packageName);
+    }
+
+    return `uv ${args.join(' ')}`;
+}
+
+/**
+ * Ensure a persistent tool binary is installed for marketplace mode.
+ *
+ * If the binary already exists, it is reused. Otherwise the package is installed
+ * with `uv tool install` so future activations can use the persistent binary
+ * directly instead of creating a fresh uvx environment.
+ *
+ * @param packageName - PyPI package name
+ * @param binaryName - Expected installed binary name
+ * @param pythonVersion - Optional Python version constraint
+ * @param log - Optional logging function
+ * @returns Installed binary path, or null if install failed
+ */
+export async function ensureInstalledTool(
+    packageName: string,
+    binaryName?: string,
+    pythonVersion?: string,
+    log?: (msg: string) => void,
+): Promise<string | null> {
+    const _log = log || (() => {});
+    const bin = binaryName || packageName;
+    const existing = findInstalledTool(bin);
+
+    if (existing) {
+        _log(`Found pre-installed tool: ${bin} -> ${existing}`);
+        return existing;
+    }
+
+    const command = getUvToolInstallCommand(packageName, binaryName, pythonVersion);
+    _log(`Installing persistent tool: ${packageName} (${bin})`);
+    _log(`Running: ${command}`);
+
+    try {
+        await execAsync(command, {
+            timeout: 180000,
+            env: { ...process.env, PATH: enrichPath(process.env.PATH || '') },
+        });
+
+        const installed = findInstalledTool(bin);
+        if (installed) {
+            _log(`Installed persistent tool: ${bin} -> ${installed}`);
+            return installed;
+        }
+
+        _log(`Install reported success but binary not found: ${bin}`);
+        return null;
+    } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        _log(`Persistent tool install failed for ${packageName}: ${errorMsg}`);
+        return null;
+    }
 }
 
 /**

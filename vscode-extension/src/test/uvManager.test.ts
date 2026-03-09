@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getUvSearchPaths, getUvxPath, getUvInstallCommand, buildUvxCommand, buildMcpCommand, buildMcpEnv, findUvPath, enrichPath, findInstalledTool } from '../uvManager';
+import { getUvSearchPaths, getUvxPath, getUvInstallCommand, getUvToolInstallCommand, buildUvxCommand, buildMcpCommand, buildMcpEnv, findUvPath, enrichPath, findInstalledTool } from '../uvManager';
 
 // ──────────────────────────────────────────────────────────
 // getUvSearchPaths
@@ -66,6 +66,27 @@ describe('getUvInstallCommand', () => {
 });
 
 // ──────────────────────────────────────────────────────────
+// getUvToolInstallCommand
+// ──────────────────────────────────────────────────────────
+
+describe('getUvToolInstallCommand', () => {
+    it('installs package directly when binary name matches package name', () => {
+        const cmd = getUvToolInstallCommand('med-paper-assistant');
+        expect(cmd).toBe('uv tool install med-paper-assistant');
+    });
+
+    it('uses --from when binary name differs from package name', () => {
+        const cmd = getUvToolInstallCommand('creativity-generation-unit', 'cgu-server');
+        expect(cmd).toBe('uv tool install --from creativity-generation-unit cgu-server');
+    });
+
+    it('includes python version when specified', () => {
+        const cmd = getUvToolInstallCommand('drawio-mcp', 'drawio-mcp-server', '>=3.11');
+        expect(cmd).toBe('uv tool install --python >=3.11 --from drawio-mcp drawio-mcp-server');
+    });
+});
+
+// ──────────────────────────────────────────────────────────
 // buildUvxCommand
 // ──────────────────────────────────────────────────────────
 
@@ -121,6 +142,14 @@ describe('findInstalledTool', () => {
             expect(result.startsWith('/')).toBe(true);
         }
     });
+
+    it('can resolve tools from PATH-derived directories', () => {
+        const pathDirs = enrichPath(process.env.PATH || '').split(':').filter(Boolean);
+        const result = findInstalledTool('uv');
+        if (result !== null) {
+            expect(pathDirs.some(dir => result.startsWith(dir))).toBe(true);
+        }
+    });
 });
 
 // ──────────────────────────────────────────────────────────
@@ -153,6 +182,14 @@ describe('buildMcpCommand', () => {
             // Falls back to uvx with the packageName
             expect(cmd).toBe('uvx');
             expect(args).toEqual(['drawio-mcp']);
+        }
+    });
+
+    it('supports CGU package name with custom server binary', () => {
+        const [cmd, args, preInstalled] = buildMcpCommand('uv', 'creativity-generation-unit', 'cgu-server');
+        if (!preInstalled) {
+            expect(cmd).toBe('uvx');
+            expect(args).toEqual(['creativity-generation-unit']);
         }
     });
 
