@@ -401,11 +401,34 @@ def register_figure_tools(mcp: FastMCP, drafter: Drafter):
         tables_dir = os.path.join(project_path, "results", "tables")
         file_path = os.path.join(tables_dir, filename)
 
-        # If content provided, write the file
+        # If content provided, write the file and auto-record review receipt.
+        # The agent has literal access to the content (passed as argument),
+        # so "reviewing" is implicit — no separate review_asset_for_insertion needed.
         if table_content:
             os.makedirs(tables_dir, exist_ok=True)
             with open(file_path, "w", encoding="utf-8") as f:
                 f.write(table_content)
+
+            tracker = _get_tracker(project_path)
+            asset_rel = _relative_asset_path(project_path, "table", filename)
+            existing_review = tracker.get_asset_review(asset_rel, asset_type="table")
+            if not existing_review or DataArtifactTracker._normalize_caption(
+                str(existing_review.get("proposed_caption", ""))
+            ) != DataArtifactTracker._normalize_caption(caption):
+                lines = table_content.strip().split("\n")
+                n_rows = max(0, len(lines) - 2)  # header + delimiter
+                n_cols = len([c for c in (lines[0].split("|") if lines else []) if c.strip()])
+                tracker.record_asset_review(
+                    asset_type="table",
+                    asset_path=asset_rel,
+                    observations=[
+                        f"Table has {n_rows} data rows and {n_cols} columns",
+                        f"Content provided inline ({len(table_content)} chars)",
+                    ],
+                    rationale="Content provided directly via table_content parameter; agent has full access.",
+                    proposed_caption=caption,
+                    evidence_excerpt=table_content[:500],
+                )
 
         # Validate file exists
         if not os.path.isfile(file_path):
@@ -421,17 +444,19 @@ def register_figure_tools(mcp: FastMCP, drafter: Drafter):
                 "💡 Use `generate_table_one` first, or pass `table_content` to create the file."
             )
 
-        tracker = _get_tracker(project_path)
-        review_ok, review_detail = tracker.review_satisfies_caption(
-            _relative_asset_path(project_path, "table", filename),
-            caption,
-            asset_type="table",
-        )
-        if not review_ok:
-            return (
-                f"❌ Table caption blocked — {review_detail}.\n\n"
-                'Call `review_asset_for_insertion(asset_type="table", ...)` first using the same caption.'
+        # For file-based tables (no inline content), require explicit review receipt.
+        if not table_content:
+            tracker = _get_tracker(project_path)
+            review_ok, review_detail = tracker.review_satisfies_caption(
+                _relative_asset_path(project_path, "table", filename),
+                caption,
+                asset_type="table",
             )
+            if not review_ok:
+                return (
+                    f"❌ Table caption blocked — {review_detail}.\n\n"
+                    'Call `review_asset_for_insertion(asset_type="table", ...)` first using the same caption.'
+                )
 
         # Load manifest
         manifest = _load_manifest(project_path)

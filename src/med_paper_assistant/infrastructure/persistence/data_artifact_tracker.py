@@ -200,6 +200,13 @@ class DataArtifactTracker:
             return None
         return sorted(matches, key=lambda r: r.get("timestamp", ""))[-1]
 
+    @staticmethod
+    def _normalize_caption(text: str) -> str:
+        """Normalize caption for comparison: lowercase, strip punctuation/whitespace."""
+        import string
+
+        return text.strip().rstrip(string.punctuation).strip().lower()
+
     def review_satisfies_caption(
         self,
         asset_path: str,
@@ -219,7 +226,9 @@ class DataArtifactTracker:
             return False, "asset review rationale missing"
 
         reviewed_caption = str(review.get("proposed_caption", "")).strip()
-        if reviewed_caption and reviewed_caption != proposed_caption.strip():
+        if reviewed_caption and (
+            self._normalize_caption(reviewed_caption) != self._normalize_caption(proposed_caption)
+        ):
             return False, "caption differs from reviewed proposed_caption"
 
         return True, review.get("id", "asset review receipt")

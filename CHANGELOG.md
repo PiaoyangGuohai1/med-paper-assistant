@@ -1,4 +1,4 @@
-# Changelog
+c96u.3oa6u.3ul4ur03t86# Changelog
 
 All notable changes to this project will be documented in this file.
 
@@ -40,6 +40,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Asset Review Receipt — Caption Normalization & Auto-Review**:
+  - Caption comparison now uses `_normalize_caption()` — strips trailing punctuation, whitespace, and lowercases before matching (fixes brittle exact-match failures)
+  - `insert_table()` with inline `table_content` now auto-records review receipt (agent has full content access), eliminating redundant `review_asset_for_insertion()` call
+  - File-based tables (no `table_content`) still require explicit review receipt (hard gate preserved)
+  - 5 new tests: `TestCaptionNormalization` (4 unit tests) + auto-review integration test
 - **MCP Instructions**: Removed ghost tool `save_diagram_standalone` (merged into `save_diagram`), added missing `insert_figure`/`insert_table`/`list_assets` to DATA ANALYSIS section, updated DIAGRAM WORKFLOW
 - **Tool count drift**: 85 → 86 tools (review/ 21 → 22), synced across 5 files via `sync_repo_counts.py --fix`
 
