@@ -450,8 +450,12 @@ async function runWithTools(
     stream: vscode.ChatResponseStream,
     token: vscode.CancellationToken,
     toolFilter?: (tool: vscode.LanguageModelToolInformation) => boolean,
+    options?: {
+        maxRounds?: number;
+        promptOverride?: string;
+    },
 ): Promise<void> {
-    const maxRounds = 5;
+    const maxRounds = options?.maxRounds ?? 5;
 
     // Gather available MCP tools, applying an optional filter
     const allTools = vscode.lm.tools;
@@ -465,7 +469,7 @@ async function runWithTools(
     }));
 
     const messages: vscode.LanguageModelChatMessage[] = [
-        vscode.LanguageModelChatMessage.User(request.prompt),
+        vscode.LanguageModelChatMessage.User(options?.promptOverride ?? request.prompt),
     ];
 
     for (let round = 0; round < maxRounds; round++) {
@@ -522,6 +526,37 @@ async function runWithTools(
     }
 }
 
+function buildAutopaperExecutionPrompt(userPrompt: string, autoPaperSkill: string | null): string {
+    const preamble = [
+        'You are executing the MedPaper Auto Paper pipeline through MCP tools.',
+        'This is an execution request, not a documentation request.',
+        'Operate phase-by-phase and use code-enforced gates instead of skipping ahead.',
+        '',
+        'Mandatory execution rules:',
+        '1. Start by understanding current project state and pipeline status.',
+        '2. Before advancing from a phase, call validate_phase_gate(phase).',
+        '3. If a phase gate fails, inspect the reported missing artifacts and fix them before retrying.',
+        '4. During writing, use approve_section(section, action="approve") after each section is completed and audited.',
+        '5. During review, use start_review_round() and submit_review_round() correctly; if verdict is rewrite_needed, call request_section_rewrite().',
+        '6. Before claiming completion, call pipeline_heartbeat() and only report done if the pipeline is actually complete.',
+        '7. Prefer MCP tools over describing what should happen.',
+        '',
+        'User request:',
+        userPrompt,
+    ].join('\n');
+
+    if (!autoPaperSkill) {
+        return preamble;
+    }
+
+    return [
+        preamble,
+        '',
+        'Reference workflow instructions:',
+        autoPaperSkill,
+    ].join('\n');
+}
+
 /** Tool name filter helpers */
 const TOOL_FILTERS: Record<string, (t: vscode.LanguageModelToolInformation) => boolean> = {
     search: t => /search|literature|pubmed|reference|citation/i.test(t.name + ' ' + t.description),
@@ -532,6 +567,7 @@ const TOOL_FILTERS: Record<string, (t: vscode.LanguageModelToolInformation) => b
     analysis: t => /analy|statistic|plot|table|dataset|figure/i.test(t.name + ' ' + t.description),
     strategy: t => /search|strategy|query|mesh/i.test(t.name + ' ' + t.description),
     drawio: t => /diagram|drawio|draw|figure/i.test(t.name + ' ' + t.description),
+    autopaper: t => /project|workspace|exploration|search|reference|citation|concept|novelty|draft|write|section|word|analysis|statistic|table|figure|diagram|review|pipeline|approve|rewrite|pause|resume|format|export|document|sync/i.test(t.name + ' ' + t.description),
 };
 
 function registerChatParticipant(context: vscode.ExtensionContext): vscode.Disposable | null {
@@ -562,36 +598,18 @@ function registerChatParticipant(context: vscode.ExtensionContext): vscode.Dispo
             switch (request.command) {
                 case 'autopaper': {
                     const autoPaperSkill = loadSkillContent(skillsPath, 'auto-paper');
-                    stream.markdown('🚀 **全自動論文撰寫 (Auto Paper)**\n\n');
-                    stream.markdown('### 11-Phase Pipeline + 77 Hooks\n\n');
-                    stream.markdown('| Phase | 名稱 | 說明 |\n');
-                    stream.markdown('|-------|------|------|\n');
-                    stream.markdown('| 0 | 期刊定位 | journal-profile.yaml 設定 |\n');
-                    stream.markdown('| 1 | 寫作計畫 | manuscript-plan.yaml 產出 |\n');
-                    stream.markdown('| 2 | 文獻搜索 | 並行搜尋 + 儲存 |\n');
-                    stream.markdown('| 3 | 概念發展 | concept.md 撰寫 |\n');
-                    stream.markdown('| 4 | Novelty 驗證 | 三輪評分 ≥ 75 |\n');
-                    stream.markdown('| 5 | 逐節撰寫 | Introduction → Methods → Results → Discussion |\n');
-                    stream.markdown('| 6 | 引用同步 | sync_references |\n');
-                    stream.markdown('| 7 | 全稿審查 | Autonomous Review |\n');
-                    stream.markdown('| 8 | Word 匯出 | 產生 .docx |\n');
-                    stream.markdown('| 9 | 投稿準備 | Cover letter, checklist |\n');
-                    stream.markdown('| 10 | Meta-Learning | 更新 SKILL + Hooks |\n\n');
-                    stream.markdown('### 品質保證：77 Checks（35 Code-Enforced / 42 Agent-Driven）\n\n');
-                    stream.markdown('- **Hook A** (post-write): 字數、引用密度、Anti-AI、Wikilink\n');
-                    stream.markdown('- **Hook B** (post-section): 概念一致、🔒 保護、方法學、寫作順序\n');
-                    stream.markdown('- **Hook C** (post-manuscript): 全稿一致性、投稿清單、時間一致性\n');
-                    stream.markdown('- **Hook D** (meta-learning): SKILL/Hook 自我改進\n');
-                    stream.markdown('- **Hook E** (EQUATOR): 報告指引合規\n');
-                    stream.markdown('- **Hook F** (data artifacts): 數據產出物追蹤\n');
-                    stream.markdown('- **Hook R** (review): 審查品質門檻\n\n');
-                    if (autoPaperSkill) {
-                        stream.markdown('---\n\n<details><summary>📖 完整 Auto-Paper Skill</summary>\n\n');
-                        stream.markdown(autoPaperSkill);
-                        stream.markdown('\n\n</details>\n\n');
-                    }
-                    stream.markdown('💡 **請切換到 Agent Mode**，然後輸入「全自動寫論文」開始。');
-                    break;
+                    stream.markdown('🚀 **正在啟動 Auto Paper pipeline...**\n\n');
+                    await runWithTools(
+                        request,
+                        stream,
+                        token,
+                        TOOL_FILTERS.autopaper,
+                        {
+                            maxRounds: 12,
+                            promptOverride: buildAutopaperExecutionPrompt(request.prompt, autoPaperSkill),
+                        },
+                    );
+                    return { metadata: { command: request.command } };
                 }
 
                 case 'help':

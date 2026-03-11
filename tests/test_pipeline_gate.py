@@ -105,6 +105,24 @@ def _add_prerequisites(project_dir, up_to_phase: int):
         (exports / "paper.pdf").write_bytes(b"%PDF")
 
 
+def _approve_required_sections(project_dir):
+    """Persist explicit approval for canonical manuscript sections."""
+    checkpoint = project_dir / ".audit" / "checkpoint.json"
+    checkpoint.write_text(
+        json.dumps(
+            {
+                "section_progress": {
+                    "Abstract": {"approval_status": "approved"},
+                    "Introduction": {"approval_status": "approved"},
+                    "Methods": {"approval_status": "approved"},
+                    "Results": {"approval_status": "approved"},
+                    "Discussion": {"approval_status": "approved"},
+                }
+            }
+        )
+    )
+
+
 class TestGateResult:
     def test_critical_failures(self):
         result = GateResult(
@@ -375,8 +393,73 @@ class TestPhase5:
             ]
         )
         (project_dir / "drafts" / "manuscript.md").write_text(content)
+        _approve_required_sections(project_dir)
         r = validator.validate_phase(5)
         assert r.passed
+
+    def test_fail_when_approval_checkpoint_missing(self, validator, project_dir):
+        _add_prerequisites(project_dir, up_to_phase=5)
+        (project_dir / "drafts" / "manuscript.md").write_text(
+            "\n".join(
+                [
+                    "# Title",
+                    "## Abstract",
+                    "text",
+                    "## Introduction",
+                    "text",
+                    "## Methods",
+                    "text",
+                    "## Results",
+                    "text",
+                    "## Discussion",
+                    "text",
+                ]
+            )
+        )
+
+        r = validator.validate_phase(5)
+        assert not r.passed
+        approval_check = next(c for c in r.checks if c.name == "section_approval")
+        assert approval_check.passed is False
+        assert "checkpoint.json" in approval_check.details
+
+    def test_fail_when_required_sections_not_all_approved(self, validator, project_dir):
+        _add_prerequisites(project_dir, up_to_phase=5)
+        (project_dir / "drafts" / "manuscript.md").write_text(
+            "\n".join(
+                [
+                    "# Title",
+                    "## Abstract",
+                    "text",
+                    "## Introduction",
+                    "text",
+                    "## Methods",
+                    "text",
+                    "## Results",
+                    "text",
+                    "## Discussion",
+                    "text",
+                ]
+            )
+        )
+        (project_dir / ".audit" / "checkpoint.json").write_text(
+            json.dumps(
+                {
+                    "section_progress": {
+                        "Abstract": {"approval_status": "approved"},
+                        "Introduction": {"approval_status": "approved"},
+                        "Methods": {"approval_status": "approved"},
+                        "Results": {"approval_status": "pending"},
+                    }
+                }
+            )
+        )
+
+        r = validator.validate_phase(5)
+        assert not r.passed
+        approval_check = next(c for c in r.checks if c.name == "section_approval")
+        assert approval_check.passed is False
+        assert "Results" in approval_check.details or "Discussion" in approval_check.details
 
     def test_fail_required_planned_asset_missing_from_manifest(self, validator, project_dir):
         import yaml
@@ -556,6 +639,7 @@ class TestPhase5:
                 ]
             )
         )
+        _approve_required_sections(project_dir)
 
         r = validator.validate_phase(5)
         assert r.passed

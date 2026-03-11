@@ -6,7 +6,7 @@
 
 ## 當前焦點 (2026-03-11)
 
-Code-Enforced reference sufficiency gate & review loop prerequisite 完成。已 commit (`c51b758`) 並 push。
+AutoPaper execution path hardening 完成：VSX `/autopaper` 改為真正走 MCP tool loop，Phase 5 section approval 升級為真 hard gate。
 
 ### 當前狀態
 
@@ -19,8 +19,8 @@ Code-Enforced reference sufficiency gate & review loop prerequisite 完成。已
 | Prompts                 | **15**                                                                                      |
 | Agents                  | **9**                                                                                       |
 | Infrastructure classes  | **8** core                                                                                  |
-| Python unit tests       | **871 passed** (excl. external-dep tests)                                                   |
-| VSX vitest              | **106 passed** (4 test files)                                                               |
+| Python unit tests       | **876 passed** (excl. external-dep tests)                                                   |
+| VSX vitest              | **126 passed** (5 test files)                                                               |
 | Ruff errors             | **0**                                                                                       |
 
 ### 三層演進架構實作狀態
@@ -32,6 +32,20 @@ Code-Enforced reference sufficiency gate & review loop prerequisite 完成。已
 | L3 Autonomous Self-Evolution | ⚠️ Phase C 完成        | Git post-commit / EvolutionVerifier / Auto-PR 未實作 |
 
 ### 最近變更
+
+#### AutoPaper Execution Hardening (2026-03-11)
+
+- **VSX `/autopaper`**: 不再是 static docs-only flow，改為直接走 `runWithTools()`
+  - 新增 `TOOL_FILTERS.autopaper`
+  - 注入 `buildAutopaperExecutionPrompt()`，明確要求 `validate_phase_gate()` / `approve_section()` / `start_review_round()` / `submit_review_round()` / `pipeline_heartbeat()`
+  - tool loop 回合數 5 → 12（僅 autopaper）
+- **Phase 5 hard gate strengthened**: `section_approval` 不再是可選檢查
+  - manuscript 存在時，required sections 必須在 `.audit/checkpoint.json` 中有 explicit approval entries
+  - 缺少 checkpoint、缺少 entry、或未 approved 都會直接 fail `validate_phase(5)`
+- **VSX bundled skill synced**: `vscode-extension/skills/auto-paper/SKILL.md` 與 source `.claude/skills/auto-paper/SKILL.md` 重新同步
+- **Tests**:
+  - Python: 876 passed, 10 skipped, 1 deselected
+  - VSX: 126 passed
 
 #### Code-Enforced Reference Sufficiency & Review Loop (2026-03-11)
 

@@ -1232,32 +1232,71 @@ class PipelineGateValidator:
                         )
                     )
 
-        # Section approval check: all sections must be user-approved
+        # Section approval check: all required sections must be explicitly approved.
+        # This is a hard gate for Phase 5 because autopilot/manual review must both
+        # leave an auditable approval trail via approve_section().
         checkpoint_path = self._audit_dir / "checkpoint.json"
-        if checkpoint_path.is_file():
-            try:
-                ckpt = json.loads(checkpoint_path.read_text(encoding="utf-8"))
-                section_progress = ckpt.get("section_progress", {})
-                if section_progress:
+        required_sections_present = []
+        if ms.is_file():
+            content = ms.read_text(encoding="utf-8")
+            required_sections_present = [
+                section
+                for section in ["Abstract", "Introduction", "Methods", "Results", "Discussion"]
+                if f"## {section}" in content or f"# {section}" in content
+            ]
+
+        if required_sections_present:
+            if not checkpoint_path.is_file():
+                checks.append(
+                    GateCheck(
+                        name="section_approval",
+                        description="All sections must be user-approved",
+                        passed=False,
+                        details="MISSING checkpoint.json — call approve_section() for each required section",
+                    )
+                )
+            else:
+                try:
+                    ckpt = json.loads(checkpoint_path.read_text(encoding="utf-8"))
+                    section_progress = ckpt.get("section_progress", {})
+
+                    missing_entries = [
+                        name for name in required_sections_present if name not in section_progress
+                    ]
                     unapproved = [
                         name
-                        for name, data in section_progress.items()
-                        if data.get("approval_status", "pending") != "approved"
+                        for name in required_sections_present
+                        if section_progress.get(name, {}).get("approval_status", "pending")
+                        != "approved"
                     ]
+
+                    if missing_entries:
+                        details = f"missing approval entries: {', '.join(missing_entries)}"
+                        passed = False
+                    elif unapproved:
+                        details = f"unapproved: {', '.join(unapproved)}"
+                        passed = False
+                    else:
+                        details = "all required sections approved"
+                        passed = True
+
                     checks.append(
                         GateCheck(
                             name="section_approval",
                             description="All sections must be user-approved",
-                            passed=len(unapproved) == 0,
-                            details=(
-                                "all sections approved"
-                                if len(unapproved) == 0
-                                else f"unapproved: {', '.join(unapproved)}"
-                            ),
+                            passed=passed,
+                            details=details,
                         )
                     )
-            except (json.JSONDecodeError, OSError):
-                pass
+                except (json.JSONDecodeError, OSError):
+                    checks.append(
+                        GateCheck(
+                            name="section_approval",
+                            description="All sections must be user-approved",
+                            passed=False,
+                            details="checkpoint.json unreadable — call approve_section() again to rebuild approval state",
+                        )
+                    )
 
         return GateResult(phase=5, phase_name="Writing", checks=checks, passed=False)
 

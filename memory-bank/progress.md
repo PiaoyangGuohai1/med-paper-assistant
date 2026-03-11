@@ -1,4 +1,4 @@
-# Progress (Updated: 2026-03-04)
+# Progress (Updated: 2026-03-11)
 
 ## Done
 
@@ -18,6 +18,13 @@
 - **VSX Phase 2+3**: runWithTools() 5-round tool-calling loop + 8 command-specific tool filters + DrawioPanel WebviewPanel + /drawio command + 77 Hooks
 - **Governance Review Stack**: Concept Review Gate (novelty<75 block) + Pipeline Gate Validator (Phase 4/7/9/11) + C12/C13 hooks + template
 - **Draw.io submodule doc**: MEDPAPER_INTEGRATION.md in integrations/next-ai-draw-io (d289938)
+- **Stale project state bug fixed**: unified ProjectManager singleton + MEDPAPER_BASE_DIR path resolution; fixed VSX wrong-project reads
+- **AutoPaper execution hardening**:
+  - VSX `/autopaper` now executes MCP tool loop instead of static markdown-only flow
+  - Added `TOOL_FILTERS.autopaper` + `buildAutopaperExecutionPrompt()`
+  - Phase 5 `section_approval` is now a real hard gate (checkpoint + approved required sections mandatory)
+  - Synced bundled `auto-paper` skill with source workspace skill
+  - Tests: Python 876 passed, VSX 126 passed
 
 ## Doing
 
@@ -25,6 +32,8 @@
 
 ## Next
 
+- Build a code-level autopaper orchestrator (reduce reliance on SKILL-only sequencing)
+- Add semantic repair loop after hook failures (patch -> rerun hooks -> converge/regress/escalate)
 - Phase 5c TreeView/CodeLens/Diagnostics features
 - Dashboard Webview embedding
 - CI/CD pipeline for automated VSIX publish
