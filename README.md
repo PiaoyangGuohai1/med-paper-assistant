@@ -30,7 +30,7 @@ This is a **monorepo toolkit** that bundles everything a medical researcher need
 
 | Component                                                          | Type                   | Tools  | Description                                                                       |
 | ------------------------------------------------------------------ | ---------------------- | ------ | --------------------------------------------------------------------------------- |
-| **[mdpaper](#-mdpaper-mcp-tools)**                                 | Core MCP Server        | 86     | Paper writing: projects, references, drafts, analysis, validation, review, export |
+| **[mdpaper](#-mdpaper-mcp-tools)**                                 | Core MCP Server        | 87     | Paper writing: projects, references, drafts, analysis, validation, review, export |
 | **[pubmed-search](https://github.com/u9401066/pubmed-search-mcp)** | MCP Server (submodule) | 37     | PubMed/Europe PMC/CORE search, PICO, citation metrics, session mgmt               |
 | **[CGU](https://github.com/u9401066/creativity-generation-unit)**  | MCP Server (submodule) | 13     | Creative generation: brainstorm, deep think, spark collision                      |
 | **[VS Code Extension](vscode-extension/)**                         | Extension              | 3 cmds | MCP server lifecycle, `@mdpaper` chat participant                                 |
@@ -55,8 +55,8 @@ flowchart LR
         Dash[Dashboard]
     end
 
-    subgraph MCP["MCP Servers (~136 tools)"]
-        mdpaper["mdpaper<br/>86 tools<br/>Draft · Export · Validate · Review"]
+    subgraph MCP["MCP Servers (~137 tools)"]
+      mdpaper["mdpaper<br/>87 tools<br/>Draft · Export · Validate · Review"]
         pubmed["pubmed-search<br/>37 tools<br/>Search · Metrics"]
         cgu["CGU<br/>13 tools<br/>Deep Think · Ideas"]
     end

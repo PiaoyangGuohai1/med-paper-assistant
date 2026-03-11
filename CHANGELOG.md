@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Asset Review Receipt Hard Gate for Figures/Tables**:
+
+  - New analysis tool `review_asset_for_insertion()` records auditable review receipts in `.audit/data-artifacts.yaml`
+  - `insert_figure()` / `insert_table()` now BLOCK caption registration unless a matching review receipt exists first
+  - Phase 5 gate now validates planned figure/table captions are backed by review receipts
+  - Hook F / `validate_data_artifacts()` now report missing or incomplete asset review receipts as gate-blocking issues
+  - 1 new targeted tool test file + expanded Phase 5 / Hook F coverage
+
 - **Paper-Type-Aware Reference Minimum Enforcement (Hook A7 + Phase 2 Gate)**:
   - New Hook A7 `check_reference_sufficiency()` — Code-Enforced pre-write gate that blocks writing when reference library is insufficient
   - Phase 2 Gate now paper-type-aware: reads `paper.type` from `journal-profile.yaml`, resolves minimum via 3-tier chain

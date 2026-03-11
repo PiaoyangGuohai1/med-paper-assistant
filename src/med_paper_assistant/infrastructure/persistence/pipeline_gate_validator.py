@@ -34,6 +34,8 @@ from typing import Any
 import structlog
 import yaml
 
+from med_paper_assistant.infrastructure.persistence.data_artifact_tracker import DataArtifactTracker
+
 logger = structlog.get_logger()
 
 
@@ -1114,6 +1116,7 @@ class PipelineGateValidator:
 
         if ms.is_file():
             content = ms.read_text(encoding="utf-8")
+            tracker = DataArtifactTracker(self._audit_dir, self._project_dir)
             required_sections = ["Abstract", "Introduction", "Methods", "Results", "Discussion"]
             for section in required_sections:
                 found = f"## {section}" in content or f"# {section}" in content
@@ -1231,6 +1234,22 @@ class PipelineGateValidator:
                             ),
                         )
                     )
+
+                asset_folder = "figures" if kind == "figure" else "tables"
+                asset_rel_path = f"results/{asset_folder}/{manifest_entry.get('filename', '')}"
+                review_ok, review_detail = tracker.review_satisfies_caption(
+                    asset_rel_path,
+                    str(manifest_entry.get("caption", "")),
+                    asset_type=kind,
+                )
+                checks.append(
+                    GateCheck(
+                        name=f"asset-plan:{asset_id}:reviewed",
+                        description=f"Required planned {kind} caption is backed by an asset review receipt",
+                        passed=review_ok,
+                        details=review_detail,
+                    )
+                )
 
         # Section approval check: all required sections must be explicitly approved.
         # This is a hard gate for Phase 5 because autopilot/manual review must both

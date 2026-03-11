@@ -37,6 +37,7 @@ from pathlib import Path
 import pytest
 import yaml
 
+from med_paper_assistant.infrastructure.persistence.data_artifact_tracker import DataArtifactTracker
 from med_paper_assistant.infrastructure.persistence.writing_hooks import (
     AMER_VS_BRIT,
     ANTI_AI_PHRASES,
@@ -520,6 +521,42 @@ class TestHookF:
         r = engine.validate_data_artifacts(None)
         assert r.hook_id == "F"
         assert isinstance(r.passed, bool)
+
+    def test_missing_asset_review_receipt_is_reported(
+        self, engine: WritingHooksEngine, project_dir: Path
+    ):
+        """Figure/table captions without review receipts should fail Hook F."""
+        results_dir = project_dir / "results"
+        (results_dir / "figures").mkdir(parents=True)
+        (results_dir / "figures" / "outcome.png").write_bytes(b"png")
+        (results_dir / "manifest.json").write_text(
+            json.dumps(
+                {
+                    "figures": [
+                        {
+                            "number": 1,
+                            "filename": "outcome.png",
+                            "caption": "Primary outcome by treatment arm",
+                        }
+                    ],
+                    "tables": [],
+                }
+            )
+        )
+
+        tracker = DataArtifactTracker(project_dir / ".audit", project_dir)
+        tracker.record_artifact(
+            tool_name="create_plot",
+            artifact_type="figure",
+            parameters={"plot_type": "bar"},
+            output_path="results/figures/outcome.png",
+            data_source="study.csv",
+            provenance_code="print('plot')",
+        )
+
+        r = engine.validate_data_artifacts("See Figure 1 for the primary outcome.")
+        assert r.passed is False
+        assert any(i.hook_id == "F1" and "review receipt" in i.message for i in r.issues)
 
 
 # ──────────────────────────────────────────────────────────────────────────────

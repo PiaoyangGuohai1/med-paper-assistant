@@ -25,6 +25,11 @@
   - Phase 5 `section_approval` is now a real hard gate (checkpoint + approved required sections mandatory)
   - Synced bundled `auto-paper` skill with source workspace skill
   - Tests: Python 876 passed, VSX 126 passed
+- **Asset review receipt hard gate for figures/tables**:
+  - New `review_asset_for_insertion()` tool records auditable review receipts before captioning/insertion
+  - `insert_figure()` / `insert_table()` now refuse captions without matching receipts
+  - Phase 5 + Hook F validate caption/asset review linkage
+  - Tests: Python fast suite 881 passed
 
 ## Doing
 

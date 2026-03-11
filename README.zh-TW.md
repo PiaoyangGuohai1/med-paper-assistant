@@ -24,7 +24,7 @@
 
 | 元件                                                               | 類型                 | 工具數 | 說明                                                      |
 | ------------------------------------------------------------------ | -------------------- | ------ | --------------------------------------------------------- |
-| **[mdpaper](#-mdpaper-mcp-工具)**                                  | 核心 MCP Server      | 86     | 論文寫作：專案、文獻、草稿、分析、驗證、審查、匯出        |
+| **[mdpaper](#-mdpaper-mcp-工具)**                                  | 核心 MCP Server      | 87     | 論文寫作：專案、文獻、草稿、分析、驗證、審查、匯出        |
 | **[pubmed-search](https://github.com/u9401066/pubmed-search-mcp)** | MCP Server（子模組） | 37     | PubMed/Europe PMC/CORE 搜尋、PICO、引用指標、session 管理 |
 | **[CGU](https://github.com/u9401066/creativity-generation-unit)**  | MCP Server（子模組） | 13     | 創意發想：腦力激盪、深度思考、火花碰撞                    |
 | **[VS Code Extension](vscode-extension/)**                         | 擴充功能             | 3 指令 | MCP Server 生命週期、`@mdpaper` 聊天參與者                |
@@ -49,8 +49,8 @@ flowchart LR
         Dash[Dashboard]
     end
 
-    subgraph MCP["MCP Server（~136 工具）"]
-        mdpaper["mdpaper<br/>86 工具<br/>草稿 · 匯出 · 驗證 · 審查"]
+    subgraph MCP["MCP Server（~137 工具）"]
+      mdpaper["mdpaper<br/>87 工具<br/>草稿 · 匯出 · 驗證 · 審查"]
         pubmed["pubmed-search<br/>37 工具<br/>搜尋 · 指標"]
         cgu["CGU<br/>13 工具<br/>深度思考 · 創意"]
     end

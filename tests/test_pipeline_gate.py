@@ -4,6 +4,7 @@ import json
 
 import pytest
 
+from med_paper_assistant.infrastructure.persistence.data_artifact_tracker import DataArtifactTracker
 from med_paper_assistant.infrastructure.persistence.pipeline_gate_validator import (
     GateCheck,
     GateResult,
@@ -120,6 +121,23 @@ def _approve_required_sections(project_dir):
                 }
             }
         )
+    )
+
+
+def _record_asset_review(
+    project_dir,
+    asset_type: str,
+    asset_path: str,
+    caption: str,
+):
+    tracker = DataArtifactTracker(project_dir / ".audit", project_dir)
+    tracker.record_asset_review(
+        asset_type=asset_type,
+        asset_path=asset_path,
+        observations=["Observed primary grouping", "Observed displayed outcome summary"],
+        rationale="Caption aligns with the visible content and intended manuscript reference.",
+        proposed_caption=caption,
+        evidence_excerpt="verified during test",
     )
 
 
@@ -639,10 +657,96 @@ class TestPhase5:
                 ]
             )
         )
+        _record_asset_review(
+            project_dir,
+            "figure",
+            "results/figures/study-flow.drawio",
+            "Study flow diagram",
+        )
+        _record_asset_review(
+            project_dir,
+            "table",
+            "results/tables/baseline.md",
+            "Baseline characteristics of study participants",
+        )
         _approve_required_sections(project_dir)
 
         r = validator.validate_phase(5)
         assert r.passed
+
+    def test_fail_planned_asset_without_review_receipt(self, validator, project_dir):
+        import yaml
+
+        _add_prerequisites(project_dir, up_to_phase=5)
+        (project_dir / "results" / "figures").mkdir(parents=True)
+        (project_dir / "results" / "figures" / "forest.png").write_bytes(b"png")
+        (project_dir / ".audit" / "data-artifacts.yaml").write_text(
+            yaml.dump(
+                {
+                    "artifacts": [
+                        {
+                            "id": "DA-001",
+                            "artifact_type": "figure",
+                            "output_path": "results/figures/forest.png",
+                            "provenance_code": "print('x')",
+                        }
+                    ]
+                }
+            )
+        )
+        (project_dir / "results" / "manifest.json").write_text(
+            json.dumps(
+                {
+                    "figures": [
+                        {
+                            "number": 1,
+                            "filename": "forest.png",
+                            "caption": "Forest plot of primary outcome",
+                        }
+                    ],
+                    "tables": [],
+                }
+            )
+        )
+        (project_dir / "manuscript-plan.yaml").write_text(
+            yaml.dump(
+                {
+                    "asset_plan": [
+                        {
+                            "id": "fig-forest",
+                            "type": "custom_figure",
+                            "section": "Results",
+                            "caption": "Forest plot of primary outcome",
+                        }
+                    ]
+                }
+            )
+        )
+        (project_dir / "drafts" / "manuscript.md").write_text(
+            "\n".join(
+                [
+                    "# Title",
+                    "## Abstract",
+                    "text",
+                    "## Introduction",
+                    "text",
+                    "## Methods",
+                    "text",
+                    "## Results",
+                    "**Figure 1.** Forest plot of primary outcome",
+                    "See Figure 1.",
+                    "## Discussion",
+                    "text",
+                ]
+            )
+        )
+        _approve_required_sections(project_dir)
+
+        r = validator.validate_phase(5)
+        assert not r.passed
+        review_check = next(c for c in r.checks if c.name == "asset-plan:fig-forest:reviewed")
+        assert review_check.passed is False
+        assert "review" in review_check.details
 
 
 class TestPhase7:

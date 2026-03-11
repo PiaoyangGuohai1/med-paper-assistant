@@ -121,6 +121,7 @@ TOOL_GUIDE = """## TOOL SELECTION GUIDE (46 tools)
 | `run_statistical_test` | Run t-test, correlation, etc. |
 | `create_plot` | Create visualizations |
 | `generate_table_one` | Generate baseline characteristics table |
+| `review_asset_for_insertion` | Record proof that the agent reviewed a figure/table before captioning/inserting |
 | `insert_figure` | Insert a figure reference into draft |
 | `insert_table` | Insert a table reference into draft |
 | `list_assets` | List all figures/tables in project |
@@ -166,8 +167,9 @@ TOOL_GUIDE = """## TOOL SELECTION GUIDE (46 tools)
 - "ready to write, have references" → `convert_exploration_to_project` → `create_project`
 - "write/draft" → **`validate_concept` first!** → `write_draft`
 - "analyze data" → `analyze_dataset`
-- "insert figure" → `insert_figure` (after saving to project)
-- "insert table" → `insert_table` (after generating with `generate_table_one`)
+- "review figure/table before caption" → `review_asset_for_insertion`
+- "insert figure" → `review_asset_for_insertion` → `insert_figure`
+- "insert table" → `review_asset_for_insertion` → `insert_table` (after generating with `generate_table_one`)
 - "list figures/tables" → `list_assets`
 - "create diagram" → **Confirm project first** → `drawio.create_diagram()`
 - "save diagram" → `drawio.get_diagram_content()` → `save_diagram(project=...)`

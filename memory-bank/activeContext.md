@@ -6,22 +6,22 @@
 
 ## 當前焦點 (2026-03-11)
 
-AutoPaper execution path hardening 完成：VSX `/autopaper` 改為真正走 MCP tool loop，Phase 5 section approval 升級為真 hard gate。
+AutoPaper execution path hardening 完成，並新增 figure/table asset review receipt hard gate，確保 agent 在寫圖說表說前留下可審計的「已看過」證據。
 
 ### 當前狀態
 
-| 項目                    | 數量/狀態                                                                                   |
-| ----------------------- | ------------------------------------------------------------------------------------------- |
-| MCP Tools               | **86** (project/17, reference/12, draft/13, validation/3, analysis/9, review/22, export/10) |
-| Skills                  | **26**                                                                                      |
-| Hooks                   | **77 checks** (35 Code-Enforced / 42 Agent-Driven)                                          |
-| Copilot Lifecycle Hooks | **7** (SessionStart→Stop，`.github/hooks/mdpaper-lifecycle.json`)                           |
-| Prompts                 | **15**                                                                                      |
-| Agents                  | **9**                                                                                       |
-| Infrastructure classes  | **8** core                                                                                  |
-| Python unit tests       | **876 passed** (excl. external-dep tests)                                                   |
-| VSX vitest              | **126 passed** (5 test files)                                                               |
-| Ruff errors             | **0**                                                                                       |
+| 項目                    | 數量/狀態                                                                                    |
+| ----------------------- | -------------------------------------------------------------------------------------------- |
+| MCP Tools               | **87** (project/17, reference/12, draft/13, validation/3, analysis/10, review/22, export/10) |
+| Skills                  | **26**                                                                                       |
+| Hooks                   | **77 checks** (35 Code-Enforced / 42 Agent-Driven)                                           |
+| Copilot Lifecycle Hooks | **7** (SessionStart→Stop，`.github/hooks/mdpaper-lifecycle.json`)                            |
+| Prompts                 | **15**                                                                                       |
+| Agents                  | **9**                                                                                        |
+| Infrastructure classes  | **8** core                                                                                   |
+| Python unit tests       | **876 passed** (excl. external-dep tests)                                                    |
+| VSX vitest              | **126 passed** (5 test files)                                                                |
+| Ruff errors             | **0**                                                                                        |
 
 ### 三層演進架構實作狀態
 
@@ -32,6 +32,21 @@ AutoPaper execution path hardening 完成：VSX `/autopaper` 改為真正走 MCP
 | L3 Autonomous Self-Evolution | ⚠️ Phase C 完成        | Git post-commit / EvolutionVerifier / Auto-PR 未實作 |
 
 ### 最近變更
+
+#### Asset Review Receipt Hard Gate (2026-03-11)
+
+- **New analysis tool**: `review_asset_for_insertion()`
+  - 寫入 `.audit/data-artifacts.yaml` 的 `asset_reviews` receipts
+  - 要求至少 2 個 observations + rationale + proposed_caption
+- **Caption insertion now blocked without review proof**:
+  - `insert_figure()` / `insert_table()` 若沒有 matching receipt 會直接拒絕
+  - 若 caption 與 reviewed proposed_caption 不一致也會拒絕
+- **Phase 5 / Hook F enforcement**:
+  - planned assets 現在需要 `asset-plan:*:reviewed`
+  - `validate_data_artifacts()` 將缺少/不完整 receipt 視為 gate-blocking issue
+- **Tests**:
+  - Python fast suite: 881 passed, 10 skipped, 1 deselected
+  - Targeted asset-review/gate/hook tests: 260 passed
 
 #### AutoPaper Execution Hardening (2026-03-11)
 

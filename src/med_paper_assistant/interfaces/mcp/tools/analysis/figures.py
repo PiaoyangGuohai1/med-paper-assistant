@@ -8,11 +8,14 @@ import json
 import os
 import re
 from pathlib import Path
-from typing import Optional
+from typing import Literal, Optional, cast
 
 from mcp.server.fastmcp import FastMCP
 
-from med_paper_assistant.infrastructure.persistence import get_project_manager
+from med_paper_assistant.infrastructure.persistence import (
+    DataArtifactTracker,
+    get_project_manager,
+)
 from med_paper_assistant.infrastructure.services import Drafter
 
 from .._shared import (
@@ -57,6 +60,31 @@ def _save_manifest(project_path: str, manifest: dict) -> str:
     with open(manifest_path, "w", encoding="utf-8") as f:
         json.dump(manifest, f, indent=2, ensure_ascii=False)
     return manifest_path
+
+
+def _get_tracker(project_path: str) -> DataArtifactTracker:
+    """Build a DataArtifactTracker for the current project."""
+    project_dir = Path(project_path)
+    return DataArtifactTracker(project_dir / ".audit", project_dir)
+
+
+def _relative_asset_path(project_path: str, kind: str, filename: str) -> str:
+    """Return a stable project-relative asset path for review receipts."""
+    folder = "figures" if kind == "figure" else "tables"
+    return f"results/{folder}/{filename}"
+
+
+def _validate_review_inputs(
+    observations: str, rationale: str, proposed_caption: str
+) -> tuple[bool, str]:
+    observation_items = [o.strip() for o in observations.split("|") if o.strip()]
+    if len(observation_items) < 2:
+        return False, "❌ Provide at least 2 observations separated by `|` to prove asset review."
+    if not rationale.strip():
+        return False, "❌ Rationale is required. Explain why the caption fits the asset."
+    if not proposed_caption.strip():
+        return False, "❌ proposed_caption is required."
+    return True, ""
 
 
 def _resolve_exportable_figure_path(project_path: str, filename: str) -> Optional[str]:
@@ -144,6 +172,80 @@ def register_figure_tools(mcp: FastMCP, drafter: Drafter):
     """Register figure/table insertion tools."""
 
     @mcp.tool()
+    def review_asset_for_insertion(
+        asset_type: str,
+        filename: str,
+        observations: str,
+        rationale: str,
+        proposed_caption: str,
+        evidence_excerpt: str = "",
+        project: Optional[str] = None,
+    ) -> str:
+        """
+        Record an auditable asset review receipt before inserting a figure/table.
+
+        This is the hard-gated proof that the agent reviewed the asset before
+        writing a caption or legend. `insert_figure`/`insert_table` will refuse
+        to proceed unless a matching receipt exists.
+
+        Args:
+            asset_type: "figure" or "table"
+            filename: Asset filename inside results/figures or results/tables
+            observations: Pipe-separated observations, e.g. "2 groups|error bars shown"
+            rationale: Why the proposed caption accurately represents the asset
+            proposed_caption: The caption to be used later in insert_figure/table
+            evidence_excerpt: Optional verbatim excerpt from a table or source note
+            project: Project slug (uses current if omitted)
+        """
+        log_tool_call(
+            "review_asset_for_insertion",
+            {"asset_type": asset_type, "filename": filename, "project": project},
+        )
+
+        is_valid, msg, _ = ensure_project_context(project)
+        if not is_valid:
+            return f"❌ {msg}\n\n{get_project_list_for_prompt()}"
+
+        if asset_type not in {"figure", "table"}:
+            return "❌ asset_type must be `figure` or `table`."
+
+        valid_inputs, error_msg = _validate_review_inputs(observations, rationale, proposed_caption)
+        if not valid_inputs:
+            return error_msg
+
+        project_path = _get_project_path(project)
+        if not project_path:
+            return "❌ No active project."
+
+        folder = "figures" if asset_type == "figure" else "tables"
+        asset_path = os.path.join(project_path, "results", folder, filename)
+        if not os.path.isfile(asset_path):
+            return f"❌ File '{filename}' not found in results/{folder}/."
+
+        observation_items = [o.strip() for o in observations.split("|") if o.strip()]
+        tracker = _get_tracker(project_path)
+        receipt = tracker.record_asset_review(
+            asset_type=cast(Literal["figure", "table"], asset_type),
+            asset_path=_relative_asset_path(project_path, asset_type, filename),
+            observations=observation_items,
+            rationale=rationale,
+            proposed_caption=proposed_caption,
+            evidence_excerpt=evidence_excerpt,
+        )
+
+        result = (
+            f"✅ **Asset Review Recorded**\n\n"
+            f"- **Receipt:** {receipt['id']}\n"
+            f"- **Type:** {asset_type}\n"
+            f"- **File:** results/{folder}/{filename}\n"
+            f"- **Caption:** {proposed_caption}\n"
+            f"- **Observations:** {len(receipt['observations'])}\n\n"
+            "You can now call `insert_figure` or `insert_table` with the same caption."
+        )
+        log_tool_result("review_asset_for_insertion", receipt["id"], success=True)
+        return result
+
+    @mcp.tool()
     def insert_figure(
         filename: str,
         caption: str,
@@ -190,6 +292,18 @@ def register_figure_tools(mcp: FastMCP, drafter: Drafter):
                 f"❌ File '{filename}' not found in results/figures/.\n"
                 f"Available: {avail_str}\n\n"
                 "💡 Use `create_plot` or `save_diagram` first to generate the figure."
+            )
+
+        tracker = _get_tracker(project_path)
+        review_ok, review_detail = tracker.review_satisfies_caption(
+            _relative_asset_path(project_path, "figure", filename),
+            caption,
+            asset_type="figure",
+        )
+        if not review_ok:
+            return (
+                f"❌ Figure caption blocked — {review_detail}.\n\n"
+                'Call `review_asset_for_insertion(asset_type="figure", ...)` first using the same caption.'
             )
 
         # Load manifest
@@ -305,6 +419,18 @@ def register_figure_tools(mcp: FastMCP, drafter: Drafter):
                 f"❌ File '{filename}' not found in results/tables/.\n"
                 f"Available: {avail_str}\n\n"
                 "💡 Use `generate_table_one` first, or pass `table_content` to create the file."
+            )
+
+        tracker = _get_tracker(project_path)
+        review_ok, review_detail = tracker.review_satisfies_caption(
+            _relative_asset_path(project_path, "table", filename),
+            caption,
+            asset_type="table",
+        )
+        if not review_ok:
+            return (
+                f"❌ Table caption blocked — {review_detail}.\n\n"
+                'Call `review_asset_for_insertion(asset_type="table", ...)` first using the same caption.'
             )
 
         # Load manifest
