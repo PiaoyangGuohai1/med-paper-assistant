@@ -4,51 +4,47 @@
 
 - **Git Identity**: u9401066 <u9401066@gap.kmu.edu.tw>
 
-## 當前焦點 (2026-03-11)
+## 當前焦點 (2026-03-17)
 
-AutoPaper execution path hardening 完成，並新增 figure/table asset review receipt hard gate，確保 agent 在寫圖說表說前留下可審計的「已看過」證據。
+Hook 機制全面審計完成，修正了 batch runner、MCP alias、tracker categories、文件等 9 個差異。
 
 ### 當前狀態
 
 | 項目                    | 數量/狀態                                                                                    |
 | ----------------------- | -------------------------------------------------------------------------------------------- |
-| MCP Tools               | **87** (project/17, reference/12, draft/13, validation/3, analysis/10, review/22, export/10) |
+| MCP Tools               | **88** (project/17, reference/12, draft/13, validation/3, analysis/10, review/23, export/10) |
 | Skills                  | **26**                                                                                       |
-| Hooks                   | **77 checks** (35 Code-Enforced / 42 Agent-Driven)                                           |
+| Hooks                   | **78 checks** (52 Code-Enforced / 26 Agent-Driven)                                           |
 | Copilot Lifecycle Hooks | **7** (SessionStart→Stop，`.github/hooks/mdpaper-lifecycle.json`)                            |
 | Prompts                 | **15**                                                                                       |
-| Agents                  | **9**                                                                                        |
+| Agents                  | **10**                                                                                       |
 | Infrastructure classes  | **8** core                                                                                   |
-| Python unit tests       | **876 passed** (excl. external-dep tests)                                                    |
+| Python unit tests       | **905 passed** (excl. external-dep tests)                                                    |
 | VSX vitest              | **126 passed** (5 test files)                                                                |
-| Ruff errors             | **0**                                                                                        |
+| Ruff errors             | **0** (310 E501 line-length only)                                                            |
 
 ### 三層演進架構實作狀態
 
 | 層級                         | 狀態                   | 說明                                                 |
 | ---------------------------- | ---------------------- | ---------------------------------------------------- |
-| L1 Event-Driven Hooks        | ⚠️ 35/77 Code-Enforced | 42 個 Agent-Driven 僅靠 SKILL.md                     |
+| L1 Event-Driven Hooks        | ✅ 52/78 Code-Enforced | 26 個 Agent-Driven 僅靠 SKILL.md                     |
 | L2 Code-Level Enforcement    | ✅ 完整                | 5 元件全部上線                                       |
 | L3 Autonomous Self-Evolution | ⚠️ Phase C 完成        | Git post-commit / EvolutionVerifier / Auto-PR 未實作 |
 
 ### 最近變更
 
+#### Hook Mechanism Full Audit + Fix (2026-03-17)
+
+- **Full audit scope**: WritingHooksEngine (A/B/C/F/P/G), ReviewHooksEngine (R1-R6), MetaLearningEngine (D1-D9), DomainConstraintEngine, HookEffectivenessTracker, MCP tool layer
+- **Code fixes applied**:
+  - `_engine.py`: `run_post_manuscript_hooks()` added C10-C13 (4 missing hooks)
+  - `audit_hooks.py`: ALL alias +A7+C7B, POST-WRITE +A7, POST-MANUSCRIPT +C7B; docstring updated to 40 hooks
+  - `hook_effectiveness_tracker.py`: HOOK_CATEGORIES +P (pre-commit) +G (git-hooks)
+- **Documentation alignment**: AGENTS.md + copilot-instructions.md Code-Enforced count 36→52, Agent-Driven 42→26
+- **Engine docstring**: A1–A7 (not A1–A6), F (not F1–F4), P1/P2/P4/P5/P7 (not just P5/P7)
+- **Tests**: 905 passed, 0 regressions
+
 #### Asset Review Receipt Hard Gate (2026-03-11)
-
-- **New analysis tool**: `review_asset_for_insertion()`
-  - 寫入 `.audit/data-artifacts.yaml` 的 `asset_reviews` receipts
-  - 要求至少 2 個 observations + rationale + proposed_caption
-- **Caption insertion now blocked without review proof**:
-  - `insert_figure()` / `insert_table()` 若沒有 matching receipt 會直接拒絕
-  - 若 caption 與 reviewed proposed_caption 不一致也會拒絕
-- **Phase 5 / Hook F enforcement**:
-  - planned assets 現在需要 `asset-plan:*:reviewed`
-  - `validate_data_artifacts()` 將缺少/不完整 receipt 視為 gate-blocking issue
-- **Tests**:
-  - Python fast suite: 881 passed, 10 skipped, 1 deselected
-  - Targeted asset-review/gate/hook tests: 260 passed
-
-#### AutoPaper Execution Hardening (2026-03-11)
 
 - **VSX `/autopaper`**: 不再是 static docs-only flow，改為直接走 `runWithTools()`
   - 新增 `TOOL_FILTERS.autopaper`

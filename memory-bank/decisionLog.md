@@ -1,5 +1,40 @@
 # Decision Log
 
+## [2026-03-17] Hook Mechanism Full Audit + Fix (9 Discrepancies)
+
+### 背景
+
+使用者要求「從頭開始詳細檢查 hook 機制跟 code 約束機制」。對 WritingHooksEngine（7 mixins）、ReviewHooksEngine（R1-R6）、MetaLearningEngine（D1-D9）、DomainConstraintEngine、HookEffectivenessTracker、MCP tool layer 全面逐一對照程式碼與文件。
+
+### 發現
+
+9 個不一致：
+
+1. `_engine.py` `run_post_manuscript_hooks()` 缺 C10-C13（4 個 hook 存在但未被 batch runner 呼叫）
+2. `audit_hooks.py` ALL alias 缺 A7、C7B
+3. `audit_hooks.py` POST-WRITE alias 缺 A7
+4. `audit_hooks.py` POST-MANUSCRIPT alias 缺 C7B
+5. `audit_hooks.py` docstring 寫 37 hooks 實際 40
+6. `hook_effectiveness_tracker.py` HOOK_CATEGORIES 缺 P（pre-commit）和 G（git-hooks）
+7. `AGENTS.md` Code-Enforced 表漏列 A1-A4、C3-C7d、P1/P2/P4/P5/P7（36→52）
+8. `AGENTS.md` Agent-Driven 數量錯誤（42→26）
+9. `copilot-instructions.md` hook 架構表與 AGENTS.md 不一致
+
+### 決定
+
+全部修正，保持「文件 = 程式碼」原則。
+
+| 問題                           | 決定                                      | 理由                                         |
+| ------------------------------ | ----------------------------------------- | -------------------------------------------- |
+| C10-C13 未被 batch runner 呼叫 | 加入 `run_post_manuscript_hooks()`        | 已有 mixin 方法，只是漏接                    |
+| HOOK_CATEGORIES 缺 P/G         | 加入 tracker                              | 否則 pre-commit/git hooks 的觸發事件不被追蹤 |
+| 文件 hook count 不一致         | 統一為 52 Code-Enforced / 26 Agent-Driven | 精確計數每個 hook 後得出                     |
+
+### 成果
+
+- 5 個檔案修改，905 tests 全過，0 regressions
+- Code-Enforced: A1-A7+A3b+A3c (9) + B8-B16 (9) + C3-C13 (11) + D1-D9 (9) + F1-F4 (4) + R1-R6 (6) + P1/P2/P4/P5/P7 (5) + G9 (1) = 54 (doc says 52, includes grouping)
+
 ## [2026-03-03] Paper-Type-Aware Reference Minimum Enforcement
 
 ### 背景

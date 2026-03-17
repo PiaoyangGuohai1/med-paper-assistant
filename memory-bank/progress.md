@@ -30,6 +30,16 @@
   - `insert_figure()` / `insert_table()` now refuse captions without matching receipts
   - Phase 5 + Hook F validate caption/asset review linkage
   - Tests: Python fast suite 881 passed
+- **Hook mechanism full audit + fix (2026-03-17)**:
+  - Complete audit of all Code-Enforced hooks (A/B/C/D/F/P/G/R series)
+  - Fixed `run_post_manuscript_hooks()` missing C10-C13 in batch runner
+  - Fixed MCP `run_writing_hooks` aliases: ALL missing A7+C7B, POST-WRITE missing A7, POST-MANUSCRIPT missing C7B
+  - Fixed `HOOK_CATEGORIES` missing P (pre-commit) + G (git-hooks) entries
+  - Updated MCP tool docstring to list all 40 hooks
+  - Updated Engine class docstring (A-series A1–A7, F not F1–F4, P-series P1/P2/P4/P5/P7)
+  - Corrected hook count: 36→52 Code-Enforced / 42→26 Agent-Driven (total still 78)
+  - AGENTS.md + copilot-instructions.md tables fully aligned with code
+  - 905 tests all passing, 0 regressions
 
 ## Doing
 

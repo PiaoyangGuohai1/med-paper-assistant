@@ -29,11 +29,11 @@ class WritingHooksEngine(
     Unified engine for all writing-quality hooks.
 
     Composes all mixin series:
-    - A-series (PostWriteHooksMixin): A1–A6, A3b, A3c — post-write immediate checks
+    - A-series (PostWriteHooksMixin): A1–A7, A3b, A3c — post-write immediate checks
     - B-series (SectionQualityMixin): B8–B16 — section-level quality
     - C-series (ManuscriptHooksMixin): C3–C13 — manuscript-level consistency
-    - F-series (DataArtifactsMixin): F1–F4 — data artifact validation
-    - P-series (PreCommitMixin): P5, P7 — pre-commit integrity
+    - F-series (DataArtifactsMixin): F — data artifact validation
+    - P-series (PreCommitMixin): P1, P2, P4, P5, P7 — pre-commit integrity
     - G-series (GitHooksMixin): G9 — git status
 
     Batch runners orchestrate hooks into logical groups.
@@ -107,7 +107,7 @@ class WritingHooksEngine(
         content: str,
     ) -> dict[str, HookResult]:
         """
-        Run all post-manuscript hooks (C3, C4, C5, C6, C7a, C7b, C7d, C9, F) on the full manuscript.
+        Run all post-manuscript hooks (C3–C13, F) on the full manuscript.
 
         Returns:
             Dict mapping hook_id -> HookResult.
@@ -121,6 +121,10 @@ class WritingHooksEngine(
             "C7b": self.check_asset_plan_coverage(content),
             "C7d": self.check_cross_references(content),
             "C9": self.check_supplementary_crossref(content),
+            "C10": self.check_reference_fulltext_status(content),
+            "C11": self.check_citation_distribution(content),
+            "C12": self.check_citation_relevance_audit(content),
+            "C13": self.check_figure_table_quality(content),
             "F": self.validate_data_artifacts(content),
         }
 

@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Hook batch runner**: `run_post_manuscript_hooks()` now calls C10 (full manuscript validation), C11 (citation distribution), C12 (citation decision audit), C13 (figure/table quality) — previously defined in mixin but not wired into the batch runner
+- **MCP hook aliases**: `audit_hooks.py` ALL set now includes A7 (reference sufficiency) and C7B (asset coverage); POST-WRITE +A7, POST-MANUSCRIPT +C7B; docstring corrected from 37→40 hooks
+- **Hook effectiveness tracker**: `HOOK_CATEGORIES` now tracks P (pre-commit) and G (git-hooks) event categories
+- **Documentation alignment**: AGENTS.md and copilot-instructions.md hook count tables corrected — Code-Enforced 36→52, Agent-Driven 42→26, matching actual codebase
+
 ## [0.5.0] - 2026-03-11
 
 ### Added
