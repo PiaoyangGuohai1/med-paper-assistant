@@ -84,3 +84,15 @@ repos:
         always_run: true
         stages: [pre-commit]
         verbose: true
+
+  # ── Paper Quality Hooks (P1,P2,P4,P5,P7) ──────
+  - repo: local
+    hooks:
+      - id: paper-precommit
+        name: paper-precommit (P-series quality checks)
+        entry: uv run python scripts/hooks/paper_precommit.py
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+        verbose: true

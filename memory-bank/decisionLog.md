@@ -1,5 +1,37 @@
 # Decision Log
 
+## [2026-03-17] Enforcement Gap Closure — Embedded Hooks + Pre-Commit + B2 Guard
+
+### 背景
+
+深入調查 Copilot Lifecycle Hooks 和 git pre-commit hooks 的真實強制力後，發現三個重大缺口：
+
+1. Git pre-commit 只跑 prettier/ruff/mypy/bandit/pytest，完全沒有 paper quality hooks（P-series）
+2. `write_draft` 只在結尾附 guidance hint（`build_guidance_hint`），agent 可以無視
+3. `patch_draft` 沒有檢查 🔒 受保護內容
+
+### 決定
+
+| 缺口                           | 解決方案                                                            | 設計考量                                                  |
+| ------------------------------ | ------------------------------------------------------------------- | --------------------------------------------------------- |
+| Git pre-commit 缺 paper hooks  | `scripts/hooks/paper_precommit.py` + `.pre-commit-config.yaml` 註冊 | CRITICAL 時 exit 1 阻擋 commit，WARNING 只報告            |
+| write_draft 只有 guidance hint | `_run_embedded_post_write_hooks()` 取代 `build_guidance_hint()`     | 非阻擋式（結果附在回應中）但自動執行，agent 無法跳過呼叫  |
+| patch_draft 無 🔒 保護         | Step 3.5 B2 guard 檢測 `🔒` 在 concept.md 的 old_text 中            | 阻擋式（直接 return error），用 `log_agent_misuse()` 記錄 |
+
+### 關鍵設計決策：嵌入式 hooks 為非阻擋式
+
+embedded hooks 選擇 advisory（附在回應中）而非 blocking（阻止寫入），原因：
+
+- 寫入已發生（檔案已存），阻擋無意義
+- agent 看到 CRITICAL 報告後會自行修正（大多數情況下）
+- 真正的阻擋點在 git pre-commit（P-series）和 phase gate（PipelineGateValidator）
+- 使用體驗優於先檢查再寫入（因為檢查需要完整內容）
+
+### 成果
+
+- 11 新測試，916 total（+11）
+- 3 個檔案修改（writing.py, editing.py, paper_precommit.py）+ 1 config + 1 test file
+
 ## [2026-03-17] Hook Mechanism Full Audit + Fix (9 Discrepancies)
 
 ### 背景

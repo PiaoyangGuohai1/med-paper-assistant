@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Paper pre-commit hook (P-series)**: New `scripts/hooks/paper_precommit.py` registered in `.pre-commit-config.yaml` — runs P1/P2/P4/P5/P7 quality checks automatically on `git commit`, blocking on CRITICAL issues
+- **Embedded post-write hooks**: `write_draft` and `patch_draft` now auto-run A-series hooks (A1–A7, B9, B10, B15) after successful write — agent cannot skip, non-blocking advisory report appended to output
+- **B2 protected content guard**: `patch_draft` now blocks modification of 🔒-marked sections in `concept.md` — prevents agent from altering NOVELTY STATEMENT or KEY SELLING POINTS without user approval
+
 ### Fixed
 
 - **Hook batch runner**: `run_post_manuscript_hooks()` now calls C10 (full manuscript validation), C11 (citation distribution), C12 (citation decision audit), C13 (figure/table quality) — previously defined in mixin but not wired into the batch runner

@@ -28,6 +28,11 @@
 - **Asset review receipt hard gate for figures/tables**:
   - New `review_asset_for_insertion()` tool records auditable review receipts before captioning/insertion
   - `insert_figure()` / `insert_table()` now refuse captions without matching receipts
+- **Enforcement gap closure (P0–P1)**:
+  - P0: `scripts/hooks/paper_precommit.py` registered in `.pre-commit-config.yaml` — runs P1/P2/P4/P5/P7 on `git commit`
+  - P1: `write_draft` and `patch_draft` now auto-run A-series hooks (embedded, agent cannot skip)
+  - B2: `patch_draft` blocks modification of 🔒-protected content in `concept.md`
+  - 11 new tests, 916 total passing
   - Phase 5 + Hook F validate caption/asset review linkage
   - Tests: Python fast suite 881 passed
 - **Hook mechanism full audit + fix (2026-03-17)**:

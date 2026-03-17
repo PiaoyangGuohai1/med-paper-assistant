@@ -25,13 +25,13 @@ from .._shared import (
     auto_checkpoint_writing,
     get_concept_path,
     get_drafts_dir,
+    get_project_path,
     log_agent_misuse,
     log_tool_call,
     log_tool_error,
     log_tool_result,
     validate_project_for_tool,
 )
-from .._shared.guidance import build_guidance_hint
 
 # Global validator instance
 _concept_validator = ConceptValidator()
@@ -279,6 +279,57 @@ def _get_author_block() -> str:
         return ""
 
     return generate_author_block(author_objs)
+
+
+def _run_embedded_post_write_hooks(content: str, section_name: str = "manuscript") -> str:
+    """
+    Run post-write hooks automatically after write_draft/patch_draft.
+
+    Non-blocking: returns a report string (never raises). Agent cannot skip
+    this because it's embedded in the write path, not a separate tool call.
+
+    Returns:
+        Formatted report string, or empty string if no issues or on error.
+    """
+    project_path = get_project_path()
+    if not project_path:
+        return ""
+
+    try:
+        from med_paper_assistant.infrastructure.persistence.writing_hooks import (
+            WritingHooksEngine,
+        )
+
+        engine = WritingHooksEngine(project_path)
+        results = engine.run_post_write_hooks(content, section=section_name)
+
+        criticals: list[str] = []
+        warnings: list[str] = []
+
+        for hook_id, hook_result in results.items():
+            for issue in hook_result.issues:
+                line = f"[{hook_id}] {issue.message}"
+                if issue.severity == "CRITICAL":
+                    criticals.append(f"❌ {line}")
+                elif issue.severity == "WARNING":
+                    warnings.append(f"⚠️  {line}")
+
+        if not criticals and not warnings:
+            return "\n\n✅ **Post-write hooks**: All checks passed."
+
+        parts = ["\n\n📋 **Post-write hooks (auto-run)**:"]
+        if criticals:
+            parts.append(f"\n**CRITICAL ({len(criticals)}):**")
+            parts.extend(f"\n- {c}" for c in criticals)
+        if warnings:
+            parts.append(f"\n**Warnings ({len(warnings)}):**")
+            parts.extend(f"\n- {w}" for w in warnings[:10])  # Cap at 10 to avoid token bloat
+            if len(warnings) > 10:
+                parts.append(f"\n- ... and {len(warnings) - 10} more")
+
+        return "".join(parts)
+    except Exception:
+        return ""  # Silently fail — don't block writing due to hook errors
 
 
 def register_writing_tools(mcp: FastMCP, drafter: Drafter):
@@ -590,7 +641,18 @@ def register_writing_tools(mcp: FastMCP, drafter: Drafter):
                 reminder += f"\n\n{prereq_warning}"
 
             result = f"Draft created successfully at: {path}{reminder}"
-            result = build_guidance_hint(result, next_tool="run_writing_hooks")
+
+            # 🔒 Embedded post-write hooks (auto-run, agent cannot skip)
+            if not is_concept_file:
+                section_for_hooks = (
+                    os.path.splitext(os.path.basename(filename))[0]
+                    .replace("_", " ")
+                    .replace("-", " ")
+                    .title()
+                )
+                hook_report = _run_embedded_post_write_hooks(fixed_content, section_for_hooks)
+                result += hook_report
+
             log_tool_result("write_draft", result, success=True)
             return result
         except Exception as e:

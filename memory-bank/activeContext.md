@@ -6,7 +6,7 @@
 
 ## 當前焦點 (2026-03-17)
 
-Hook 機制全面審計完成，修正了 batch runner、MCP alias、tracker categories、文件等 9 個差異。
+Enforcement gap closure 完成 — 補齊 P0（git pre-commit paper hooks）、P1（write_draft/patch_draft 嵌入式 A-series hooks）、B2（🔒 protected content guard）。
 
 ### 當前狀態
 
@@ -19,7 +19,7 @@ Hook 機制全面審計完成，修正了 batch runner、MCP alias、tracker cat
 | Prompts                 | **15**                                                                                       |
 | Agents                  | **10**                                                                                       |
 | Infrastructure classes  | **8** core                                                                                   |
-| Python unit tests       | **905 passed** (excl. external-dep tests)                                                    |
+| Python unit tests       | **916 passed** (excl. external-dep tests)                                                    |
 | VSX vitest              | **126 passed** (5 test files)                                                                |
 | Ruff errors             | **0** (310 E501 line-length only)                                                            |
 
@@ -32,6 +32,13 @@ Hook 機制全面審計完成，修正了 batch runner、MCP alias、tracker cat
 | L3 Autonomous Self-Evolution | ⚠️ Phase C 完成        | Git post-commit / EvolutionVerifier / Auto-PR 未實作 |
 
 ### 最近變更
+
+#### Enforcement Gap Closure (2026-03-17)
+
+- **P0: `scripts/hooks/paper_precommit.py`** — 新 git pre-commit hook，自動掃描 `projects/` 下有草稿的專案，呼叫 `WritingHooksEngine.run_precommit_hooks()`，CRITICAL 時阻擋 commit
+- **P1: Embedded post-write hooks** — `write_draft` 和 `patch_draft` 寫入後自動跑 A-series hooks，結果嵌入回應（agent 無法跳過）
+- **B2: Protected content guard** — `patch_draft` 偵測 `🔒` 標記，阻擋對 concept.md 中受保護區段的修改
+- **Tests**: 11 new → 916 total passed
 
 #### Hook Mechanism Full Audit + Fix (2026-03-17)
 
