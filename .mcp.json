@@ -1,0 +1,62 @@
+{
+  "mcpServers": {
+    "mdpaper": {
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "run",
+        "--directory",
+        "/Users/longxinyang/Documents/OBSIDIAN/tools/med-paper-assistant",
+        "python",
+        "-m",
+        "med_paper_assistant.interfaces.mcp"
+      ],
+      "env": {
+        "PYTHONPATH": "/Users/longxinyang/Documents/OBSIDIAN/tools/med-paper-assistant/src"
+      }
+    },
+    "pubmed-search": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "pubmed-search-mcp"
+      ],
+      "env": {
+        "ENTREZ_EMAIL": "longxinyang@gxmu.edu.cn"
+      }
+    },
+    "cgu": {
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "run",
+        "--directory",
+        "/Users/longxinyang/Documents/OBSIDIAN/tools/med-paper-assistant/integrations/cgu",
+        "python",
+        "-m",
+        "cgu.server"
+      ],
+      "env": {
+        "CGU_THINKING_ENGINE": "simple"
+      }
+    },
+    "asset-aware": {
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "run",
+        "--directory",
+        "/Users/longxinyang/Documents/OBSIDIAN/tools/med-paper-assistant/integrations/asset-aware-mcp",
+        "asset-aware-mcp"
+      ]
+    },
+    "drawio": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@drawio/mcp"
+      ]
+    }
+  }
+}

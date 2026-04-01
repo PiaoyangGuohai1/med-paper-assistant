@@ -1,0 +1,137 @@
+# ═══════════════════════════════════════════════════════════════
+# Journal Profile: Briefings in Bioinformatics
+# ═══════════════════════════════════════════════════════════════
+# Generated: 2026-04-01
+# Source: https://academic.oup.com/bib/pages/General_Instructions
+#
+# Usage: cp templates/journal-profiles/bib.yaml \
+#           projects/{slug}/journal-profile.yaml
+#
+# ⚠️  Always verify against the latest author guidelines URL above.
+#     Journal requirements may change without notice.
+# ═══════════════════════════════════════════════════════════════
+
+journal:
+  name: Briefings in Bioinformatics
+  abbreviation: Brief Bioinform
+  issn: 1467-5463
+  issn_online: 1477-4054
+  publisher: Oxford University Press
+  submission_url: https://mc.manuscriptcentral.com/bib
+  guidelines_url: https://academic.oup.com/bib/pages/General_Instructions
+authors: []
+paper:
+  type: original-research
+  sections:
+  - name: Title Page
+    required: true
+  - name: Abstract
+    required: true
+    structured: false
+    word_limit: 200
+  - name: Introduction
+    required: true
+  - name: Methods
+    required: true
+  - name: Results
+    required: true
+  - name: Discussion
+    required: true
+  - name: Conclusions
+    required: false
+word_limits:
+  total_manuscript: 7000
+  abstract: 200
+  title_characters: 150
+  running_title_characters: 50
+assets:
+  figures_max: 10
+  tables_max: 10
+  total_display_items_max: 10
+  supplementary_allowed: true
+  figure_formats:
+  - TIFF
+  - EPS
+  - PDF
+  - PNG
+  figure_dpi: 300
+  table_format: editable
+references:
+  style: vancouver
+  csl: ''
+  max_references: 70
+  max_authors_before_etal: 6
+  doi_required: false
+  pmid_preferred: true
+  reference_limits:
+    original-research: 70
+    review-article: 100
+  minimum_reference_limits:
+    original-research: 20
+    review-article: 40
+required_documents:
+  cover_letter: true
+  highlights: false
+  graphical_abstract: false
+  author_contributions: true
+  conflict_of_interest: true
+  funding_statement: true
+  ethics_statement: false
+  data_availability: true
+  keywords:
+    required: true
+    count: 3-6
+reporting_guidelines:
+  checklist: code and data availability required
+  registration_required: false
+pipeline:
+  hook_a_max_rounds: 3
+  hook_b_max_rounds: 2
+  hook_c_max_rounds: 3
+  review_max_rounds: 3
+  autonomous_review:
+    enabled: true
+    reviewer_perspectives:
+    - methodology_expert
+    - domain_specialist
+    - statistician
+    - editor
+    quality_threshold: 7
+  tolerance:
+    word_percent: 20
+    citation_density_strict: true
+  section_brief:
+    enabled: true
+    paragraph_level: true
+    enforce_must_cite: true
+  changelog: []
+  writing:
+    language: en
+    tone: formal-academic
+    anti_ai_strictness: high
+    citation_density:
+      introduction: 100
+      methods: 0
+      results: 0
+      discussion: 150
+  assets:
+    auto_generate_table_one: true
+    auto_generate_plots: true
+    flow_diagram_tool: drawio
+    fallback_to_description: true
+    agent_initiated:
+      enabled: true
+      allowed_types:
+      - literature_summary_table
+      - comparison_table
+      - timeline_figure
+      - concept_diagram
+      must_respect_limits: true
+abstract:
+  structured: false
+  headings: null
+other_article_types:
+  review-article:
+    word_limit: 10000
+    abstract: 200
+    references: 100

@@ -1,0 +1,155 @@
+# ═══════════════════════════════════════════════════════════════
+# Journal Profile: BMC Public Health
+# ═══════════════════════════════════════════════════════════════
+# Generated: 2026-04-01
+# Source: https://bmcpublichealth.biomedcentral.com/submission-guidelines
+#
+# Usage: cp templates/journal-profiles/bmc-public-health.yaml \
+#           projects/{slug}/journal-profile.yaml
+#
+# ⚠️  Always verify against the latest author guidelines URL above.
+#     Journal requirements may change without notice.
+# ═══════════════════════════════════════════════════════════════
+
+journal:
+  name: BMC Public Health
+  abbreviation: BMC Public Health
+  issn: 1471-2458
+  issn_online: 1471-2458
+  publisher: BioMed Central / Springer Nature
+  submission_url: https://www.editorialmanager.com/bmph/
+  guidelines_url: https://bmcpublichealth.biomedcentral.com/submission-guidelines
+authors: []
+paper:
+  type: original-research
+  sections:
+  - name: Title Page
+    required: true
+  - name: Abstract
+    required: true
+    structured: true
+    word_limit: 350
+  - name: Background
+    required: true
+  - name: Methods
+    required: true
+  - name: Results
+    required: true
+  - name: Discussion
+    required: true
+  - name: Conclusions
+    required: true
+word_limits:
+  total_manuscript: 6000
+  abstract: 350
+  title_characters: 150
+  running_title_characters: 50
+assets:
+  figures_max: 10
+  tables_max: 10
+  total_display_items_max: 15
+  supplementary_allowed: true
+  figure_formats:
+  - TIFF
+  - EPS
+  - PDF
+  - PNG
+  figure_dpi: 300
+  table_format: editable
+references:
+  style: vancouver
+  csl: ''
+  max_references: 60
+  max_authors_before_etal: 6
+  doi_required: false
+  pmid_preferred: true
+  reference_limits:
+    original-research: 60
+    review-article: 100
+    systematic-review: 100
+    meta-analysis: 100
+    case-report: 20
+    letter: 10
+  minimum_reference_limits:
+    original-research: 20
+    review-article: 40
+    case-report: 5
+    letter: 0
+required_documents:
+  cover_letter: true
+  highlights: false
+  graphical_abstract: false
+  author_contributions: true
+  conflict_of_interest: true
+  funding_statement: true
+  ethics_statement: true
+  data_availability: true
+  keywords:
+    required: true
+    count: 3-10
+reporting_guidelines:
+  checklist: required (STROBE/CONSORT/PRISMA per study type)
+  registration_required: true
+pipeline:
+  hook_a_max_rounds: 3
+  hook_b_max_rounds: 2
+  hook_c_max_rounds: 3
+  review_max_rounds: 3
+  autonomous_review:
+    enabled: true
+    reviewer_perspectives:
+    - methodology_expert
+    - domain_specialist
+    - statistician
+    - editor
+    quality_threshold: 7
+  tolerance:
+    word_percent: 20
+    citation_density_strict: true
+  section_brief:
+    enabled: true
+    paragraph_level: true
+    enforce_must_cite: true
+  changelog: []
+  writing:
+    language: en
+    tone: formal-academic
+    anti_ai_strictness: high
+    citation_density:
+      introduction: 100
+      methods: 0
+      results: 0
+      discussion: 150
+  assets:
+    auto_generate_table_one: true
+    auto_generate_plots: true
+    flow_diagram_tool: drawio
+    fallback_to_description: true
+    agent_initiated:
+      enabled: true
+      allowed_types:
+      - literature_summary_table
+      - comparison_table
+      - timeline_figure
+      - concept_diagram
+      must_respect_limits: true
+abstract:
+  structured: true
+  headings: Background, Methods, Results, Conclusions
+other_article_types:
+  case-report:
+    word_limit: 2000
+    abstract: 350
+    references: 20
+  review-article:
+    word_limit: 8000
+    abstract: 350
+    references: 100
+  letter:
+    word_limit: 1000
+    abstract: 0
+    references: 10
+  editorial:
+    word_limit: 1500
+    abstract: 0
+    references: 15

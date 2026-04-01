@@ -1,0 +1,149 @@
+# ═══════════════════════════════════════════════════════════════
+# Journal Profile: Nucleic Acids Research
+# ═══════════════════════════════════════════════════════════════
+# Generated: 2026-04-01
+# Source: https://academic.oup.com/nar/pages/submission_guidelines
+#
+# Usage: cp templates/journal-profiles/nar.yaml \
+#           projects/{slug}/journal-profile.yaml
+#
+# ⚠️  Always verify against the latest author guidelines URL above.
+#     Journal requirements may change without notice.
+# ═══════════════════════════════════════════════════════════════
+
+journal:
+  name: Nucleic Acids Research
+  abbreviation: Nucleic Acids Res
+  issn: 0305-1048
+  issn_online: 1362-4962
+  publisher: Oxford University Press
+  submission_url: https://mc.manuscriptcentral.com/nar
+  guidelines_url: https://academic.oup.com/nar/pages/submission_guidelines
+authors: []
+paper:
+  type: original-research
+  sections:
+  - name: Title Page
+    required: true
+  - name: Abstract
+    required: true
+    structured: false
+    word_limit: 200
+  - name: Introduction
+    required: true
+  - name: Materials and Methods
+    required: true
+  - name: Results
+    required: true
+  - name: Discussion
+    required: true
+  - name: Conclusions
+    required: false
+word_limits:
+  total_manuscript: 6500  # approximately 10 printed pages
+  abstract: 200
+  title_characters: 150
+  running_title_characters: 50
+assets:
+  figures_max: 8
+  tables_max: 8
+  total_display_items_max: 10
+  supplementary_allowed: true
+  figure_formats:
+  - TIFF
+  - EPS
+  - PDF
+  - PNG
+  figure_dpi: 300
+  table_format: editable
+references:
+  style: vancouver
+  csl: ''
+  max_references: 55
+  max_authors_before_etal: 6
+  doi_required: false
+  pmid_preferred: true
+  reference_limits:
+    original-research: 55
+    review-article: 80
+    web-server: 30
+    database: 30
+  minimum_reference_limits:
+    original-research: 20
+    review-article: 40
+    web-server: 10
+    database: 10
+required_documents:
+  cover_letter: true
+  highlights: false
+  graphical_abstract: false
+  author_contributions: true
+  conflict_of_interest: true
+  funding_statement: true
+  ethics_statement: true
+  data_availability: true
+  keywords:
+    required: true
+    count: 3-6
+reporting_guidelines:
+  checklist: data deposition required (GenBank/PDB etc)
+  registration_required: false
+pipeline:
+  hook_a_max_rounds: 3
+  hook_b_max_rounds: 2
+  hook_c_max_rounds: 3
+  review_max_rounds: 3
+  autonomous_review:
+    enabled: true
+    reviewer_perspectives:
+    - methodology_expert
+    - domain_specialist
+    - statistician
+    - editor
+    quality_threshold: 7
+  tolerance:
+    word_percent: 20
+    citation_density_strict: true
+  section_brief:
+    enabled: true
+    paragraph_level: true
+    enforce_must_cite: true
+  changelog: []
+  writing:
+    language: en
+    tone: formal-academic
+    anti_ai_strictness: high
+    citation_density:
+      introduction: 100
+      methods: 0
+      results: 0
+      discussion: 150
+  assets:
+    auto_generate_table_one: true
+    auto_generate_plots: true
+    flow_diagram_tool: drawio
+    fallback_to_description: true
+    agent_initiated:
+      enabled: true
+      allowed_types:
+      - literature_summary_table
+      - comparison_table
+      - timeline_figure
+      - concept_diagram
+      must_respect_limits: true
+abstract:
+  structured: false
+  headings: null
+other_article_types:
+  web-server:
+    word_limit: 4000
+    abstract: 200
+    references: 30
+  database:
+    word_limit: 4000
+    abstract: 200
+    references: 30
+  review-article:
+    word_limit: 8000
+    abstract: 200
+    references: 80

@@ -1,0 +1,160 @@
+# ═══════════════════════════════════════════════════════════════
+# Journal Profile: The BMJ
+# ═══════════════════════════════════════════════════════════════
+# Generated: 2026-04-01
+# Source: https://www.bmj.com/about-bmj/resources-authors
+#
+# Usage: cp templates/journal-profiles/bmj.yaml \
+#           projects/{slug}/journal-profile.yaml
+#
+# ⚠️  Always verify against the latest author guidelines URL above.
+#     Journal requirements may change without notice.
+# ═══════════════════════════════════════════════════════════════
+
+journal:
+  name: The BMJ
+  abbreviation: BMJ
+  issn: 0959-8138
+  issn_online: 1756-1833
+  publisher: BMJ Publishing Group
+  submission_url: https://mc.manuscriptcentral.com/bmj
+  guidelines_url: https://www.bmj.com/about-bmj/resources-authors
+authors: []
+paper:
+  type: original-research
+  sections:
+  - name: Title Page
+    required: true
+  - name: Abstract
+    required: true
+    structured: true
+    word_limit: 300
+  - name: Introduction
+    required: true
+  - name: Methods
+    required: true
+  - name: Results
+    required: true
+  - name: Discussion
+    required: true
+  - name: Conclusions
+    required: true
+word_limits:
+  total_manuscript: 4000
+  abstract: 300
+  title_characters: 150
+  running_title_characters: 50
+assets:
+  figures_max: 6
+  tables_max: 6
+  total_display_items_max: 6
+  supplementary_allowed: true
+  figure_formats:
+  - TIFF
+  - EPS
+  - PDF
+  - PNG
+  figure_dpi: 300
+  table_format: editable
+references:
+  style: vancouver
+  csl: ''
+  max_references: 35
+  max_authors_before_etal: 6
+  doi_required: false
+  pmid_preferred: true
+  reference_limits:
+    original-research: 35
+    review-article: 80
+    systematic-review: 80
+    meta-analysis: 80
+    case-report: 15
+    letter: 5
+  minimum_reference_limits:
+    original-research: 15
+    review-article: 30
+    case-report: 5
+    letter: 0
+required_documents:
+  cover_letter: true
+  highlights: false
+  graphical_abstract: false
+  author_contributions: true
+  conflict_of_interest: true
+  funding_statement: true
+  ethics_statement: true
+  data_availability: true
+  keywords:
+    required: true
+    count: 3-6
+reporting_guidelines:
+  checklist: strictly required (CONSORT/STROBE/PRISMA/STARD/MOOSE as appropriate)
+  registration_required: true
+  notes: RCT must be registered in a public trials registry before enrolment of the first participant
+pipeline:
+  hook_a_max_rounds: 3
+  hook_b_max_rounds: 2
+  hook_c_max_rounds: 3
+  review_max_rounds: 3
+  autonomous_review:
+    enabled: true
+    reviewer_perspectives:
+    - methodology_expert
+    - domain_specialist
+    - statistician
+    - editor
+    quality_threshold: 7
+  tolerance:
+    word_percent: 20
+    citation_density_strict: true
+  section_brief:
+    enabled: true
+    paragraph_level: true
+    enforce_must_cite: true
+  changelog: []
+  writing:
+    language: en
+    tone: formal-academic
+    anti_ai_strictness: high
+    citation_density:
+      introduction: 100
+      methods: 0
+      results: 0
+      discussion: 150
+  assets:
+    auto_generate_table_one: true
+    auto_generate_plots: true
+    flow_diagram_tool: drawio
+    fallback_to_description: true
+    agent_initiated:
+      enabled: true
+      allowed_types:
+      - literature_summary_table
+      - comparison_table
+      - timeline_figure
+      - concept_diagram
+      must_respect_limits: true
+abstract:
+  structured: true
+  headings: Objective, Design, Setting, Participants, Main outcome measures, Results, Conclusions
+other_article_types:
+  case-report:
+    word_limit: 1500
+    abstract: 150
+    references: 15
+  review-article:
+    word_limit: 4000
+    abstract: 300
+    references: 80
+  letter:
+    word_limit: 400
+    abstract: 0
+    references: 5
+  editorial:
+    word_limit: 1200
+    abstract: 0
+    references: 12
+  analysis:
+    word_limit: 3000
+    abstract: 250
+    references: 30
