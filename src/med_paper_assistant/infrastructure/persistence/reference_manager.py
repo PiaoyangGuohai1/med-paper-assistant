@@ -191,23 +191,17 @@ class ReferenceManager:
         # Get the API client
         client = get_pubmed_api_client(base_url=self._pubmed_api_url)
 
-        # Check if pubmed-search API is available
-        if not client.check_health():
-            logger.warning(
-                "[MCP-to-MCP] pubmed-search API not available, "
-                "falling back to Agent-provided data requirement"
+        # Try pubmed-search HTTP API first, then fallback to NCBI direct
+        article = None
+        if client.check_health():
+            logger.info(f"[MCP-to-MCP] Fetching PMID:{pmid} from pubmed-search")
+            article = client.get_cached_article(pmid, fetch_if_missing=fetch_if_missing)
+        else:
+            logger.info(
+                "[MCP-to-MCP] pubmed-search HTTP API not available, "
+                "falling back to NCBI E-utilities direct fetch"
             )
-            return (
-                f"⚠️ pubmed-search MCP HTTP API is not available.\n"
-                f"Please ensure pubmed-search is running with HTTP API enabled.\n\n"
-                f"Alternative: Use the traditional workflow:\n"
-                f"1. pubmed-search: fetch_article_details(pmid='{pmid}')\n"
-                f"2. mdpaper: save_reference(article=<metadata>)"
-            )
-
-        # Fetch verified data directly from pubmed-search
-        logger.info(f"[MCP-to-MCP] Fetching PMID:{pmid} from pubmed-search")
-        article = client.get_cached_article(pmid, fetch_if_missing=fetch_if_missing)
+            article = client.fetch_from_ncbi_direct(pmid)
 
         if not article:
             return (
@@ -817,6 +811,28 @@ class ReferenceManager:
             return "Error: pypdf library not installed. Install with: uv add pypdf"
         except Exception as e:
             return f"Error reading PDF: {str(e)}"
+
+    def get_reference_details(self, pmid: str) -> Optional[Dict[str, Any]]:
+        """
+        Get reference metadata and directory path.
+
+        Used by MCP tool layer for analysis and export workflows.
+
+        Args:
+            pmid: PubMed ID.
+
+        Returns:
+            Dictionary with 'metadata' and 'ref_dir' keys, or None if not found.
+        """
+        meta = self.get_metadata(pmid)
+        if not meta:
+            return None
+
+        ref_dir = os.path.join(self.base_dir, pmid)
+        return {
+            "metadata": meta,
+            "ref_dir": ref_dir,
+        }
 
     def get_reference_summary(self, pmid: str) -> Dict[str, Any]:
         """

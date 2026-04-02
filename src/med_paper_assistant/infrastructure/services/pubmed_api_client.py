@@ -8,9 +8,11 @@ Author: u9401066@gap.kmu.edu.tw
 """
 
 import os
+import xml.etree.ElementTree as ET
 from typing import Any, Dict, List, Optional
 
 import httpx
+import requests
 import structlog
 
 logger = structlog.get_logger()
@@ -163,6 +165,138 @@ class PubMedAPIClient:
                 return None
         except Exception:
             logger.debug("Failed to get session summary", exc_info=True)
+            return None
+
+    def fetch_from_ncbi_direct(self, pmid: str) -> Optional[Dict[str, Any]]:
+        """
+        Fetch article metadata directly from NCBI E-utilities via requests.
+
+        Fallback when the pubmed-search HTTP API is unavailable.
+        Uses requests library which handles proxy + SSL correctly
+        (unlike urllib/Biopython which may fail through certain proxies).
+
+        Args:
+            pmid: PubMed ID
+
+        Returns:
+            Article metadata dict, or None if not found
+        """
+        efetch_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
+        params = {
+            "db": "pubmed",
+            "id": pmid,
+            "retmode": "xml",
+        }
+        email = os.environ.get("ENTREZ_EMAIL", os.environ.get("PUBMED_EMAIL", ""))
+        api_key = os.environ.get("NCBI_API_KEY", "")
+        if email:
+            params["email"] = email
+        if api_key:
+            params["api_key"] = api_key
+
+        try:
+            resp = requests.get(efetch_url, params=params, timeout=self.timeout)
+            resp.raise_for_status()
+        except Exception as e:
+            logger.error(f"[NCBI-direct] Failed to fetch PMID:{pmid}: {e}")
+            return None
+
+        try:
+            root = ET.fromstring(resp.text)
+            article_el = root.find(".//PubmedArticle")
+            if article_el is None:
+                logger.warning(f"[NCBI-direct] No PubmedArticle found for PMID:{pmid}")
+                return None
+
+            medline = article_el.find("MedlineCitation")
+            art = medline.find("Article")
+
+            # Title
+            title_el = art.find("ArticleTitle")
+            title = title_el.text.rstrip(".") if title_el is not None and title_el.text else ""
+
+            # Journal
+            journal_el = art.find("Journal/Title")
+            journal = journal_el.text if journal_el is not None else ""
+            journal_abbrev_el = art.find("Journal/ISOAbbreviation")
+            journal_abbrev = journal_abbrev_el.text if journal_abbrev_el is not None else ""
+
+            # Year
+            year_el = art.find("Journal/JournalIssue/PubDate/Year")
+            year = year_el.text if year_el is not None else ""
+            if not year:
+                medline_year = art.find("Journal/JournalIssue/PubDate/MedlineDate")
+                if medline_year is not None and medline_year.text:
+                    year = medline_year.text[:4]
+
+            # Volume / Issue / Pages
+            vol_el = art.find("Journal/JournalIssue/Volume")
+            volume = vol_el.text if vol_el is not None else ""
+            iss_el = art.find("Journal/JournalIssue/Issue")
+            issue = iss_el.text if iss_el is not None else ""
+            pages_el = art.find("Pagination/MedlinePgn")
+            pages = pages_el.text if pages_el is not None else ""
+
+            # DOI
+            doi = ""
+            for eid in art.findall("ELocationID"):
+                if eid.get("EIdType") == "doi":
+                    doi = eid.text or ""
+                    break
+
+            # Authors
+            authors = []
+            authors_full = []
+            for author_el in art.findall("AuthorList/Author"):
+                last = author_el.find("LastName")
+                initials_el = author_el.find("Initials")
+                if last is not None and last.text:
+                    ln = last.text
+                    ini = initials_el.text if initials_el is not None else ""
+                    authors.append(f"{ln} {ini}".strip())
+                    authors_full.append({"last_name": ln, "initials": ini})
+
+            # Abstract
+            abstract_parts = []
+            for abs_text in art.findall("Abstract/AbstractText"):
+                label = abs_text.get("Label", "")
+                text = "".join(abs_text.itertext())
+                if label:
+                    abstract_parts.append(f"{label}: {text}")
+                else:
+                    abstract_parts.append(text)
+            abstract = " ".join(abstract_parts)
+
+            # PMC ID
+            pmc_id = ""
+            for art_id in article_el.findall("PubmedData/ArticleIdList/ArticleId"):
+                if art_id.get("IdType") == "pmc":
+                    pmc_id = art_id.text or ""
+                    break
+
+            result = {
+                "pmid": pmid,
+                "title": title,
+                "authors": authors,
+                "authors_full": authors_full,
+                "journal": journal,
+                "journal_abbrev": journal_abbrev,
+                "year": year,
+                "volume": volume,
+                "issue": issue,
+                "pages": pages,
+                "doi": doi,
+                "abstract": abstract,
+                "pmc_id": pmc_id,
+                "_data_source": "ncbi_efetch_direct",
+                "_verified": True,
+            }
+
+            logger.info(f"[NCBI-direct] Successfully fetched PMID:{pmid}: {title[:60]}")
+            return result
+
+        except Exception as e:
+            logger.error(f"[NCBI-direct] Failed to parse XML for PMID:{pmid}: {e}")
             return None
 
 
