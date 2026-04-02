@@ -6,24 +6,23 @@
 
 ---
 
-## 重启后验证结果（2026-04-02 二次验证）
+## 最终修复状态（2026-04-02 三次验证）
 
-| 修复项 | 验证结果 |
-|--------|---------|
-| PubMed API SSL (`mcp__pubmed__search_pubmed`) | ✅ 完全修复，返回结构化数据 |
-| `get_reference_for_analysis` | ✅ 完全修复 |
-| `save_reference_analysis` | ✅ 完全修复 |
-| `save_reference_mcp` | ⚠️ 仍不可用 — 依赖 pubmed-search HTTP API（非 SSL 问题） |
-| `pubmed-search` 的 `fetch_article_details` | ⚠️ DNS 解析失败，与 SSL 无关 |
+| 工具 | 最终状态 | 说明 |
+|------|---------|------|
+| `mcp__pubmed__search_pubmed` | ✅ | 通过系统代理正常工作 |
+| `get_reference_for_analysis` | ✅ | 添加了缺失的 `get_reference_details()` 方法 |
+| `save_reference_analysis` | ✅ | 同上 |
+| `save_reference_mcp` | ✅ | 新增 NCBI E-utilities 直连 fallback（用 `requests` 绕过 urllib SSL 问题） |
+| `pubmed-search fetch_article_details` | ⚠️ 第三方包限制 | Biopython/urllib 无法通过此代理环境，用 `mcp__pubmed__search_pubmed` 替代 |
 
-### 可行的文献保存流程（已验证）
+### 根因分析
 
-`save_reference_mcp` 不可用时的替代方案：
-```
-mcp__pubmed__search_pubmed(query="PMID[pmid]")  →  获取结构化数据
-mcp__mdpaper__save_reference(article={...})      →  用 last_name/initials 格式保存
-```
-此流程已验证端到端可用。
+此环境的网络特点：
+- **DNS 直连不通** — 必须通过代理（127.0.0.1:8443/7890）访问外部网站
+- **`requests`/`httpx` 通过代理正常** — 正确处理 CONNECT tunnel + SSL
+- **`urllib`（Biopython）通过代理 SSL 失败** — 第三方包内部问题，无法修改
+- **设置 `NO_PROXY` 会更糟** — 绕过代理后 DNS 不通
 
 ### 两个 PubMed MCP Server 的区别
 
@@ -177,10 +176,13 @@ authors.append({
 
 ## 待办事项
 
-- [ ] 重启 Claude Code 会话使配置生效
-- [ ] 重启后验证 `search_pubmed` 和 `save_reference_mcp` 正常
-- [ ] 重启后验证 `get_reference_for_analysis` 和 `save_reference_analysis` 正常
-- [ ] 考虑是否需要将 `NO_PROXY` 配置也加到全局 `~/.claude/settings.json`
+- [x] 重启 Claude Code 会话使配置生效
+- [x] 重启后验证 `search_pubmed` 正常
+- [x] 重启后验证 `get_reference_for_analysis` 和 `save_reference_analysis` 正常
+- [x] 修复 `save_reference_mcp` — 添加 NCBI 直连 fallback
+- [x] 推送修复到 GitHub (commit 8649dc0)
+- [ ] 重启会话后验证 `save_reference_mcp` 端到端可用（需要新会话加载修改后的代码）
+- [x] ~~`NO_PROXY` 方案~~ — 已撤回，此环境不适用（DNS 直连不通）
 
 ---
 
